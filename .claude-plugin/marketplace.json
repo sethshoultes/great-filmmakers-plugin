@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "great-filmmakers",
-      "description": "12 filmmaker personas + /filmmakers-channel + /film-project-init (v0.1). /film-crew and more orchestration commands in v1.0.",
+      "description": "12 filmmaker personas + 6 slash commands including /film-crew (backend-aware pipeline that emits HeyGen, Veo 3, or Remotion-ready artifacts). Shares the .great-authors/ bible with great-authors-plugin.",
       "source": "./",
       "category": "productivity"
     }
