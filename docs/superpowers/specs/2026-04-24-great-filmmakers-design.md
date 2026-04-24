@@ -33,13 +33,36 @@ A Claude Code plugin providing twelve filmmaker personas (directors, writers, cr
 
 ## Existing pipeline context
 
-The user already runs a published blog-to-video pipeline at `garagedoorscience.com` via the `.claude/skills/blog-to-video-generation/` skill. The pipeline has two paths:
+The user has THREE established video production paths. `/film-crew` is backend-aware and emits the right format for each:
 
-1. **Primary (99%) — HeyGen Video Agent.** Takes a HeyGen script (specific markdown format with avatar/voice frontmatter), submits to the HeyGen Video Agent, polls for completion, downloads the MP4, uploads to YouTube. Script format lives at `data/heygen-scripts/<slug>.md`.
+### Path A — HeyGen Video Agent (single-avatar educational)
 
-2. **Fallback (1%) — Remotion + ElevenLabs.** Used only when HeyGen can't handle the required custom photos (inspection-specific, brand-specific). Generates voiceover via ElevenLabs TTS, mixes with topic-aware background music, composes in Remotion, uploads to YouTube.
+- **When:** blog-to-video for garagedoorscience.com; any single-narrator talking-head format.
+- **Who:** the garagedoorscience auto-content pipeline, via `.claude/skills/blog-to-video-generation/`.
+- **Format:** `data/heygen-scripts/<slug>.md` — markdown with avatar/voice frontmatter + scene breakdown body + full spoken script.
+- **Integration:** fully API-automated. Script → HeyGen Video Agent → MP4 → YouTube.
+- **Why not always:** HeyGen generates its own visuals. Can't do multi-character blocking, custom sets, cinematic camera work, action sequences.
 
-Established persona-to-avatar mapping:
+### Path B — Veo 3.1 via Google Video Flow UI (multi-character cinematic)
+
+- **When:** narrative scenes with multiple characters, action, specific environments, cinematic camera work. The user's "Let Me Prompt That For You" sitcom project.
+- **Who:** the user manually, assisted by the `veo-builder` Flask dashboard at `~/Local Sites/veo-builder/` which parses structured markdown production docs.
+- **Format:** production-doc markdown with these required sections (parsed by `veo-builder/app.py`):
+  - Character bible — bold name lines with abbreviations (e.g. `**RONALD MCDOUGAL (RMM)**`) + descriptions
+  - `## VISUAL GRAMMAR` — camera shot types defined once, referenced throughout
+  - `## NEGATIVE PROMPT` — fenced code block with what NOT to include
+  - `### SHOT N — Title` entries with `**Scene type:**`, `**Duration:**`, and a fenced Veo prompt
+- **Integration:** the user drags character/location images from the dashboard into Google Video's "Add ingredients" panel, then copies the shot prompt. Not API-driven; AI Ultra plan constraint.
+- **Why Veo over HeyGen here:** multi-character scenes with dialogue, blocking, camera moves are Veo's strength. Filmmaker craft (Deakins lens psychology, Ferretti negative prompts, director's shot list) feeds directly into Veo prompts.
+
+### Path C — Remotion + ElevenLabs (programmatic slideshow fallback)
+
+- **When:** HeyGen credits low, need specific inspection photos as backgrounds, explicit slideshow format required. 1% of garagedoorscience pipeline use.
+- **Format:** script → Remotion composition + ElevenLabs voiceover + topic-aware music.
+- **Integration:** existing `remotion/scripts/generate-video-from-blog.ts`.
+- **Why rarely:** only when neither HeyGen nor Veo fit the content type.
+
+### Persona-to-avatar mapping (Path A only)
 
 | Author | HeyGen Avatar Group | HeyGen Voice | Use For |
 |--------|---------------------|--------------|---------|
@@ -51,10 +74,21 @@ Established persona-to-avatar mapping:
 
 **The two persona layers — distinct and complementary:**
 
-- **Great Filmmakers personas** (Scorsese, Kubrick, Kaufman, Rhimes, etc.) are *craft directors*. They shape HOW a script is structured — the hook, the peak shot, the music cue, the cut rhythm, the scene break.
-- **Existing HeyGen avatars** (Maya, Sara, Rick, Margaret, Seth) are *performers*. They voice the script the filmmaker directed.
+- **Great Filmmakers personas** (Scorsese, Kubrick, Kaufman, Rhimes, etc.) are *craft directors*. They shape HOW a scene is structured — the hook, the peak shot, the music cue, the cut rhythm, the scene break, the character blocking, the visual grammar.
+- **Backend-specific performers:**
+  - *HeyGen avatars* (Maya, Sara, Rick, Margaret, Seth) voice a single-narrator script.
+  - *Veo 3 generative scenes* perform multi-character drama from a structured production doc.
 
-A single video can combine them: Scorsese's craft judgment directs Maya's performance. That's the orchestration `/film-crew` delivers.
+A single video combines filmmaker craft + backend performance: Scorsese's craft judgment directs Maya's HeyGen narration (Path A), or Scorsese's shot-by-shot breakdown + Deakins's visual grammar + Ferretti's negative prompt become a Veo 3 production doc (Path B). `/film-crew` delivers both.
+
+### Backend selection
+
+`/film-crew --backend {heygen|veo3|remotion}`. Auto-selection from source classification when flag omitted:
+
+- **Educational / how-to / maintenance / cost / safety** → `heygen` (single avatar explains)
+- **Narrative / dialogue-heavy / multi-character / scene-driven** → `veo3` (cinematic scene)
+- **Inspection-specific / brand-photo-required** → `remotion` (slideshow with custom assets)
+- **Ambiguous** → ask the user rather than guess
 
 ## Informing learnings
 
@@ -270,45 +304,57 @@ Two-round craft dispute between two filmmakers. Same 2-round + consolidation str
 - Obvious pairings: Kubrick vs. Scorsese (control vs. kinetic); Hitchcock vs. Spielberg (suspense vs. emotion); Deakins vs. Ferretti (light vs. set); Kaufman vs. Rhimes (structural invention vs. serial momentum).
 - Users pass both names; no auto-pairing.
 
-### `/film-crew <source-file> [--director <name>] [--avatar <name>]` (v1.0) — the unique value
+### `/film-crew <source-file> [--backend <b>] [--director <name>] [--avatar <name>]` (v1.0) — the unique value
 
-The pipeline command. Turns a source file (blog post, manuscript chapter, scene notes) into a HeyGen-ready script plus supplementary craft artifacts across five specialist outputs.
+The pipeline command. Turns a source file (blog post, manuscript chapter, scene notes) into a backend-ready production doc plus supplementary craft artifacts.
 
-**Execution model: hybrid sequential + parallel.**
+**Three backends:**
 
-**Stage 1 (sequential) — Kaufman adapts prose into a HeyGen script.** Charlie Kaufman is the default adapter; his structural sensibility carries prose-to-script best. Override with `--writer rhimes` for serialized/episodic work. Output goes to `film/screenplay/<slug>.heygen.md` in the exact format Section 4 specifies — drop-in replacement for the existing pipeline's `data/heygen-scripts/<slug>.md`.
+| Backend | Primary output | Supplementary artifacts | Manual or API |
+|---------|----------------|------------------------|---------------|
+| `heygen` | `film/screenplay/<slug>.heygen.md` | edit-notes only (HeyGen ignores the rest) | API-automated via existing pipeline |
+| `veo3` | `film/screenplay/<slug>.veo3.md` | shot-lists, score-notes, storyboards, edit-notes all feed INTO the production doc's CAST / VISUAL GRAMMAR / SHOT LIST sections | Manual via veo-builder dashboard + Google Video Flow |
+| `remotion` | `film/screenplay/<slug>.remotion.md` (TBD format; matches existing pipeline's internal script) | all artifacts consumed by Remotion composition | API-automated |
 
-**Stage 2 (parallel fan-out) — specialists produce supplementary artifacts from the HeyGen script:**
+**Backend selection:**
 
-- Director (default Scorsese, override `--director <name>`) writes scene-breakdown notes → `film/edit-notes/<slug>.md` (director section). The director's craft notes are ALSO embedded inline in the HeyGen script as "Director's note:" lines per-scene, so the HeyGen output carries the craft direction even if the other artifacts are ignored.
-- Deakins writes shot list → `film/shot-lists/<slug>.md`. Used only by the Remotion fallback path (HeyGen generates its own visuals).
-- Zimmer writes score notes → `film/score-notes/<slug>.md`. Used only by the Remotion fallback path; the HeyGen agent picks music independently.
-- Schoonmaker writes cut notes → `film/edit-notes/<slug>.md` (editor section, after `---`). Informs pace and scene boundaries in both paths.
-- Ferretti writes world/set notes → `film/storyboards/<slug>.md`. Used only by the Remotion fallback path; HeyGen generates its own visuals.
+- `--backend {heygen|veo3|remotion}` — explicit.
+- Auto if omitted: inspect source. Educational/maintenance/cost/safety classification → heygen; dialogue-heavy multi-character narrative → veo3; custom-photo-required → remotion; ambiguous → ask.
 
-All five specialists dispatched in a single Agent tool message (parallel).
+**Execution model (varies slightly by backend):**
 
-**Stage 3 (consolidation)** — single-line summary to stdout: primary output path, supplementary artifact count, next-step suggestion (e.g., "HeyGen script ready at `film/screenplay/<slug>.heygen.md`. Copy to `data/heygen-scripts/<slug>.md` and run the existing pipeline, or run `/filmmakers-debate 'the opening move' scorsese kubrick` if you're unsure about pace.").
+**Heygen backend — hybrid sequential + parallel:**
+
+1. **Stage 1 (sequential):** Kaufman (or Rhimes for serialized content) adapts prose into a HeyGen script at `film/screenplay/<slug>.heygen.md`, with Director's note lines per scene reflecting the selected director's craft judgment.
+2. **Stage 2 (parallel):** director + Schoonmaker produce `film/edit-notes/<slug>.md` for human reference. Deakins, Zimmer, Ferretti are skipped — HeyGen generates its own visuals and audio, so their output would be discarded.
+3. **Stage 3:** consolidation with cp-one-liner to the existing pipeline.
+
+**Veo3 backend — sequential with heavy specialist integration:**
+
+1. **Stage 1 (parallel):** Ferretti writes the CAST bible + LOCATIONS + NEGATIVE PROMPT. Deakins writes VISUAL GRAMMAR (the camera vocabulary). Director writes the initial shot-list sketch.
+2. **Stage 2 (sequential):** Kaufman (or Rhimes) integrates all three into the production doc, writing the per-shot Veo prompts using VISUAL GRAMMAR terms, Ferretti's CAST descriptions, and respecting the NEGATIVE PROMPT.
+3. **Stage 3 (parallel):** Schoonmaker assigns shot durations and flags the peak shot. Zimmer embeds audio cues (ambient sound, dialogue pacing, music direction) in each shot's prompt — Veo 3 generates audio natively.
+4. **Stage 4:** consolidation. Suggest dropping the file into `VEO_SCRIPTS_DIR` to load into the veo-builder dashboard.
+
+**Remotion backend — mirror of heygen's structure** but primary output is the Remotion-compatible script; all specialists' artifacts contribute.
 
 **Arguments:**
 
-- `<source-file>` (required) — path to the source prose. Can be a blog MDX file, manuscript chapter, scene notes.
-- `--director <name>` (optional) — override the default director. Valid: any great-filmmakers director (scorsese, kubrick, hitchcock, kurosawa, spielberg, lynch).
-- `--writer <name>` (optional) — override Kaufman as the adapter. Valid: `kaufman`, `rhimes`.
-- `--avatar <name>` (optional) — HeyGen avatar that will perform. Valid: `maya`, `sara`, `rick`, `margaret`, `seth`. If omitted, auto-select by inspecting source classification (e.g., MDX frontmatter's `classification: maintenance` → maya; `cost` → sara; `comparison` → rick; `safety` → margaret). Default fallback: `maya`.
-- `--voice-id <id>` (optional) — override the HeyGen voice ID. If omitted, derived from the avatar selection.
-- `--scene <slug>` (optional) — override the slug (defaults to source file's basename).
+- `<source-file>` (required) — path to the source prose.
+- `--backend {heygen|veo3|remotion}` (optional) — explicit backend. Auto-selected from classification otherwise.
+- `--director <name>` (optional) — override the default director. Valid for all backends.
+- `--writer <name>` (optional) — `kaufman` or `rhimes`.
+- `--avatar <name>` (heygen backend only) — `maya | sara | rick | margaret | seth`. Auto-select from classification.
+- `--voice-id <id>` (heygen backend only) — override voice.
+- `--scene <slug>` (optional) — override slug.
 
-**Avatar → Writer defaults for serialized content:** if `--avatar sara` and no `--writer` passed, auto-default to `rhimes` (scrappy/growth-minded + serialized momentum is her wheelhouse). Writable but predictable.
+**Output compatibility:**
 
-**Output compatibility:** the primary output (`film/screenplay/<slug>.heygen.md`) matches the existing pipeline's HeyGen script format exactly. A shell one-liner gets it into the pipeline:
+- **Heygen:** `cp film/screenplay/<slug>.heygen.md ../garagedoorscience/data/heygen-scripts/<slug>.md` then run the existing pipeline's submit step.
+- **Veo3:** `cp film/screenplay/<slug>.veo3.md "$VEO_SCRIPTS_DIR/<episode>/<slug>.md"` (where `VEO_SCRIPTS_DIR` is the veo-builder dashboard's configured scripts directory). The dashboard then shows it with copy buttons for manual Veo Flow UI submission.
+- **Remotion:** path into the remotion/ sub-project's blog-to-video queue.
 
-```bash
-cp film/screenplay/<slug>.heygen.md ../garagedoorscience/data/heygen-scripts/<slug>.md
-# Then run the existing HeyGen submit step in that project.
-```
-
-Future versions may add an `--emit <path>` flag that writes directly to a sibling pipeline's expected path, but v1.0 keeps file I/O inside the plugin's own `film/` tree for clean boundaries.
+Future versions may add an `--emit <path>` flag for direct pipeline handoff, but v1.0 keeps file I/O inside `film/` for clean boundaries.
 
 ### Shared behavior
 
@@ -407,6 +453,108 @@ voiceover_only: true
 - The existing `blog-to-video-generation` pipeline reads frontmatter + body + ignores the machine-readable footer — unchanged from today.
 - A future orchestrator reads the machine-readable footer to route jobs without parsing prose.
 - `/film-crew` regeneration can diff against the footer to avoid re-work.
+
+### `film/screenplay/<slug>.veo3.md` — PRIMARY for multi-character cinematic scenes
+
+Exact-match format parsed by `~/Local Sites/veo-builder/app.py`. Copyable into the veo-builder dashboard's scripts directory for manual Veo 3 production via Google Video Flow UI.
+
+**Required sections (in this order; veo-builder regex-parses them):**
+
+```markdown
+# <Title>
+
+<Brief premise paragraph — what the scene is about in 2–3 sentences. Not parsed; for human context.>
+
+## CAST
+
+**<CHARACTER NAME> (<ABBREV>)**
+<Physical description the parser keys off of. Must include the specific visual tells that `detect_characters_in_prompt()` will match — hair, clothing, distinctive props. Written in Ferretti's voice (production design specificity).>
+
+**<SECOND CHARACTER NAME> (<ABBREV>)**
+<...>
+
+## LOCATIONS
+
+**<LOCATION NAME>**
+<Spatial description — the set as Ferretti would build it. Lighting practicals, set dressing, color palette, period details.>
+
+## VISUAL GRAMMAR
+
+**PUSH-IN ON FACE**
+<Deakins's definition — lens, framing, motion, when to use. Referenced by name in shot prompts.>
+
+**WIDE ESTABLISHING**
+<...>
+
+**TRACKING WITH CHARACTER**
+<...>
+
+## NEGATIVE PROMPT
+
+```
+<Comma-separated list of what NOT to include: text, watermarks, extra fingers, wrong character attributes, anachronisms, typical Veo failure modes. Derived from Ferretti + director's non-negotiables.>
+```
+
+## SHOT LIST
+
+### SHOT 1 — <Shot title>
+
+**Scene type:** <establishing | dialogue | action | reaction | insert | transition>
+**Duration:** <e.g., 6 seconds>
+
+```
+<The Veo 3 prompt. One paragraph, dense with visual detail. References characters by full description (not abbreviation — Veo doesn't know the abbreviations) and locations. Uses VISUAL GRAMMAR terms by name. Ends with audio cues (dialogue, ambient sound, music direction).>
+```
+
+### SHOT 2 — <...>
+
+<... repeat for each shot ...>
+
+## Machine-readable footer
+
+```yaml
+scene_id: <slug>
+source_file: <path>
+adapter: kaufman | rhimes
+director: scorsese | kubrick | hitchcock | ...
+backend: veo3
+total_shots: 8
+total_duration_seconds: 52
+characters:
+  - abbrev: RMM
+    name: Ronald McDougal
+  - abbrev: SC
+    name: Susan Crawford
+locations:
+  - conference_room
+  - lobby
+veo_model: veo-3.1-fast
+aspect_ratio: 16:9
+ingredient_images:
+  cast:
+    - CAST/RMM.jpg
+    - CAST/SC.jpg
+  locations:
+    - LOCATIONS/conference_room.jpg
+```
+```
+
+**Consumers use:**
+
+- **veo-builder dashboard** parses CAST, VISUAL GRAMMAR, NEGATIVE PROMPT, and SHOT LIST sections via its existing regex. Drops this file into `VEO_SCRIPTS_DIR` and it shows up with copy buttons and ingredient-image matching.
+- **The user manually** pastes shot prompts into Google Video Flow UI, drags matched ingredient images from the dashboard into "Add ingredients."
+- **A future API-based orchestrator** could read the machine-readable footer to programmatically submit shots to a Veo API if/when that becomes available and cost-effective. v1.0 design accommodates this without requiring it.
+
+### Which filmmaker persona fills which Veo section
+
+- **CAST:** Ferretti (physical/costume specificity) + the writer (Kaufman/Rhimes) for names and roles
+- **LOCATIONS:** Ferretti
+- **VISUAL GRAMMAR:** Deakins (camera + lens + movement vocabulary)
+- **NEGATIVE PROMPT:** Ferretti + the director (things that violate the director's non-negotiables, e.g., "no handheld camera" for Kubrick)
+- **SHOT LIST prompts:** the director, using the VISUAL GRAMMAR terms, with Deakins consulting on each shot's camera choice, Ferretti on set and prop detail, Zimmer's audio cues embedded in prompts
+- **Durations:** Schoonmaker (she sets the cut rhythm, which determines shot length)
+
+This is `/film-crew`'s biggest value-add for the Veo path: every specialist contributes to the production doc in a structured way, rather than each one producing a separate artifact the user then has to synthesize.
 
 ### `film/shot-lists/<slug>.md`
 
@@ -612,8 +760,11 @@ Explicitly captured to prevent feature creep and to preserve design rationale wh
 ## Success criteria
 
 - **v0.1 works when:** a user with an existing `.great-authors/`-equipped project can install, run `/film-project-init` to add `film/`, then `/filmmakers-channel scorsese` and get scene-breakdown feedback in Scorsese's voice. At least one save trigger correctly writes to `film/<subdir>/<slug>.md`.
-- **v1.0 works when:** `/film-crew content/blog/garage-door-opener-lifespan.mdx --director scorsese --avatar maya` produces a valid HeyGen script at `film/screenplay/garage-door-opener-lifespan.heygen.md` that parses against the existing pipeline's format, plus four supplementary artifacts in under three minutes. The HeyGen script's Director's note lines carry Scorsese-flavored craft direction (peak shot, pace, cut rhythm).
-- **The real test:** copying `film/screenplay/<slug>.heygen.md` to `garagedoorscience/data/heygen-scripts/<slug>.md`, then running the existing pipeline's HeyGen Video Agent submit step, produces an avatar-narrated video — no glue code, no prose parsing, no translation.
+- **v1.0 works when (HeyGen path):** `/film-crew content/blog/garage-door-opener-lifespan.mdx --backend heygen --director scorsese --avatar maya` produces a valid HeyGen script at `film/screenplay/garage-door-opener-lifespan.heygen.md` that parses against the existing pipeline's format, plus edit-notes, in under three minutes. The HeyGen script's Director's note lines carry Scorsese-flavored craft direction.
+- **v1.0 works when (Veo 3 path):** `/film-crew manuscript/scene-03.md --backend veo3 --director kubrick` produces a valid production doc at `film/screenplay/scene-03.veo3.md` with all six required sections (CAST, LOCATIONS, VISUAL GRAMMAR, NEGATIVE PROMPT, SHOT LIST, machine-readable footer). The file parses cleanly via `veo-builder/app.py`'s regex (character detection matches, shots enumerate, visual grammar terms are referenced in prompts).
+- **The real tests:**
+  1. Copy `.heygen.md` output into `garagedoorscience/data/heygen-scripts/<slug>.md`, run the existing pipeline's HeyGen submit step → get back an avatar-narrated video.
+  2. Copy `.veo3.md` output into `VEO_SCRIPTS_DIR/<episode>/<slug>.md`, load the veo-builder dashboard → see the production doc parsed with characters matched, shots enumerated, copy buttons working.
 
 ## Open risks
 
