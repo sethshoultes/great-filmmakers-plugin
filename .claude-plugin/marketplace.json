@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "great-filmmakers",
+  "description": "Twelve filmmaker personas + slash commands for scene breakdown and film-craft work. Companion to great-authors-plugin.",
+  "owner": {
+    "name": "Seth Shoultes",
+    "url": "https://github.com/sethshoultes"
+  },
+  "plugins": [
+    {
+      "name": "great-filmmakers",
+      "description": "12 filmmaker personas + /filmmakers-channel + /film-project-init (v0.1). /film-crew and more orchestration commands in v1.0.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

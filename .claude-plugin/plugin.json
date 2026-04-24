@@ -1,0 +1,13 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "great-filmmakers",
+  "version": "0.1.0",
+  "description": "Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus slash commands for scene breakdown and film-craft work. Third in the Caseproof persona trilogy — companion to great-minds-plugin and great-authors-plugin.",
+  "author": {
+    "name": "Seth Shoultes",
+    "url": "https://github.com/sethshoultes"
+  },
+  "repository": "https://github.com/sethshoultes/great-filmmakers-plugin",
+  "license": "MIT",
+  "keywords": ["filmmaking", "directing", "cinematography", "screenwriting", "scene-breakdown", "personas", "film-craft", "claude-code-plugin"]
+}

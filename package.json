@@ -1,0 +1,9 @@
+{
+  "name": "great-filmmakers",
+  "version": "0.1.0",
+  "description": "Twelve filmmaker personas + slash commands for scene breakdown and film-craft work.",
+  "author": "Seth Shoultes <seth@caseproof.com>",
+  "repository": "github:sethshoultes/great-filmmakers-plugin",
+  "license": "MIT",
+  "keywords": ["filmmaking", "personas", "claude-code-plugin"]
+}
