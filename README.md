@@ -13,7 +13,7 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
-## What's in v0.1
+## What's in v1.0
 
 ### 12 Filmmaker Personas
 
@@ -44,14 +44,16 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 | `zimmer-persona` | Composition — scene architecture through sound |
 | `ferretti-persona` | Production design — the world the camera sees |
 
-### 2 Slash Commands
+### 6 Slash Commands
 
 | Command | Purpose |
 |---------|---------|
 | `/filmmakers-channel <name>` | Load a filmmaker persona into the conversation with save triggers for five artifact types |
 | `/film-project-init` | Scaffold a `film/` directory and register it in the project bible |
-
-More orchestration commands (`/filmmakers-edit`, `/filmmakers-critique`, `/filmmakers-debate`, `/film-crew`) ship in v1.0.
+| `/filmmakers-edit <file> [names...]` | Multi-filmmaker editorial pass with consolidated breakdowns |
+| `/filmmakers-critique <file> [names...]` | Fast 3-bullet verdicts from 3 filmmakers in parallel (Haiku-dispatched) |
+| `/filmmakers-debate <topic> <a> <b>` | 2-round craft dispute between two filmmakers |
+| `/film-crew <file> [--backend ...]` | Backend-aware pipeline — produces HeyGen, Veo 3, or Remotion-ready artifacts |
 
 ## Project structure
 
@@ -84,8 +86,9 @@ Format specs: `docs/output-formats.md`.
 
 ## Roadmap
 
-- **v1.0** — `/filmmakers-edit`, `/filmmakers-critique`, `/filmmakers-debate`, `/film-crew` (the backend-aware pipeline command)
-- **Post-v1.0** — DXT distribution for Claude Desktop, builders (shot-builder, cue-builder), `/filmmakers-continuity`
+- **Post-v1.0** — DXT distribution for Claude Desktop, builders (shot-builder, cue-builder, storyboard-builder), `/filmmakers-continuity`, additional filmmakers (Tarkovsky, Wong Kar-wai, Varda, Miyazaki, Morricone as Zimmer alternative)
+
+All v1.0 goals shipped. Future work is driven by user feedback — open an issue at https://github.com/sethshoultes/great-filmmakers-plugin/issues.
 
 See `docs/superpowers/specs/2026-04-24-great-filmmakers-design.md` for the full design, and `docs/superpowers/plans/` for implementation plans.
 
