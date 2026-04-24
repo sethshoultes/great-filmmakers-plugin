@@ -18,18 +18,43 @@ A Claude Code plugin providing twelve filmmaker personas (directors, writers, cr
 
 ## Goals
 
-1. Let writers and creative technologists channel film-craft judgment from canonical filmmakers.
-2. Provide a cross-discipline fan-out (`/film-crew`) that takes source prose (blog post, manuscript chapter, book excerpt) and produces a complete film treatment — screenplay, shot list, score notes, storyboards, edit notes — in the voices of specific filmmakers.
-3. Produce artifacts in strict, documented formats that downstream rendering pipelines (ElevenLabs voiceover + Remotion composition, existing at `garagedoorscience/remotion/`) can consume without prose parsing.
+1. Let writers and creative technologists channel film-craft judgment from canonical filmmakers on a blog post, manuscript chapter, or scene — to shape *how* it's structured for video, not who performs it.
+2. Provide a cross-discipline fan-out (`/film-crew`) that takes source prose and produces a **HeyGen script in the exact format the existing `blog-to-video-generation` pipeline consumes**, plus supplementary craft artifacts (shot list, score notes, storyboards, edit notes) for the Remotion fallback path or for human reference.
+3. The primary output — `film/screenplay/<slug>.heygen.md` — is a drop-in replacement for `data/heygen-scripts/<slug>.md` in the existing pipeline. A user can `cp` it into the pipeline's expected path and submit to HeyGen Video Agent with zero translation.
 4. Share the project bible (`.great-authors/`) with the `great-authors` plugin so long-form projects have continuity across both plugins.
 
 ## Non-goals (v1.0)
 
-- Rendering video. The plugin emits artifacts; actual ElevenLabs/Remotion calls belong to a separate content-pipeline project.
-- HeyGen integration. The existing user pipeline uses ElevenLabs; HeyGen was aspirational in early brainstorming and is out of scope here.
+- Calling HeyGen / ElevenLabs / Remotion APIs. The plugin emits artifacts compatible with the existing `blog-to-video-generation` pipeline at `garagedoorscience/`; actual API calls live in that pipeline, not this plugin.
+- Managing HeyGen avatar assets, voice IDs, or the avatar catalog. The plugin references avatar identifiers the existing pipeline already has (Maya, Sara, Rick, Margaret, Seth); it does not create or manage them.
 - DXT distribution. Deferred until the plugin is proven in real Claude Code use.
 - Per-session journal analog, continuity checker, builders (shot-builder, cue-builder, storyboard-builder), `/filmmakers-draft`. All speculative until real use demands them.
 - The 24-hour autonomous content factory (Minds → Authors → Filmmakers → render). That is a separate orchestrator project that consumes this plugin as a building block.
+
+## Existing pipeline context
+
+The user already runs a published blog-to-video pipeline at `garagedoorscience.com` via the `.claude/skills/blog-to-video-generation/` skill. The pipeline has two paths:
+
+1. **Primary (99%) — HeyGen Video Agent.** Takes a HeyGen script (specific markdown format with avatar/voice frontmatter), submits to the HeyGen Video Agent, polls for completion, downloads the MP4, uploads to YouTube. Script format lives at `data/heygen-scripts/<slug>.md`.
+
+2. **Fallback (1%) — Remotion + ElevenLabs.** Used only when HeyGen can't handle the required custom photos (inspection-specific, brand-specific). Generates voiceover via ElevenLabs TTS, mixes with topic-aware background music, composes in Remotion, uploads to YouTube.
+
+Established persona-to-avatar mapping:
+
+| Author | HeyGen Avatar Group | HeyGen Voice | Use For |
+|--------|---------------------|--------------|---------|
+| `maya` | `6b63c5d1884b4be69b1590a6b78280c0` | `53c69b4a1aeb44edbce2f050d7a5d3ca` | Maintenance, how-to |
+| `sara` | `c70f62e006a948c3ac0c5226a8949311` | `6a2854113dd94fdfaf1f8eb51ebf5872` | Cost, buying |
+| `rick` | `933d42ed41da4fc888c0aceca3b8ff0a` | `e209b585901e47d28b243e1a5dfc8747` | Comparisons, brand |
+| `margaret` | `7115a4d1c6074ea987ea2aa899231056` | `f0240e6cefd541ac8031eeb9f3b71a82` | Safety, technical |
+| `seth` | `e5ce268666144f26813642a37197de13` | (custom) | Announcements |
+
+**The two persona layers — distinct and complementary:**
+
+- **Great Filmmakers personas** (Scorsese, Kubrick, Kaufman, Rhimes, etc.) are *craft directors*. They shape HOW a script is structured — the hook, the peak shot, the music cue, the cut rhythm, the scene break.
+- **Existing HeyGen avatars** (Maya, Sara, Rick, Margaret, Seth) are *performers*. They voice the script the filmmaker directed.
+
+A single video can combine them: Scorsese's craft judgment directs Maya's performance. That's the orchestration `/film-crew` delivers.
 
 ## Informing learnings
 
@@ -196,12 +221,12 @@ Load a named filmmaker persona into the main conversation.
 - Accepts short forms: `marty` → `scorsese`, `stanley` → `kubrick`, `hitch` → `hitchcock`, `shonda` → `rhimes`.
 - If `.great-authors/` exists in cwd, the persona reads it per its `## Before you work` protocol.
 - **Save triggers** for generated content, following great-authors v0.7 pattern:
-  - "save as screenplay" → append last prose block to `film/screenplay/<current>.md`
+  - "save as heygen script" or "save as screenplay" → append last prose block to `film/screenplay/<current>.heygen.md` (the primary HeyGen-compatible format)
   - "save as shot list" → `film/shot-lists/<current>.md`
   - "save as score notes" → `film/score-notes/<current>.md`
   - "save as storyboard" → `film/storyboards/<current>.md`
   - "save as edit notes" → `film/edit-notes/<current>.md`
-  - "save that" (ambiguous) → asks which artifact type first
+  - "save that" (ambiguous) → asks which artifact type first, with the HeyGen script as the default
 - `<current>` resolved from `.great-authors/project.md`'s `## Film > Current scene` field.
 
 ### `/film-project-init` (v0.1)
@@ -245,33 +270,45 @@ Two-round craft dispute between two filmmakers. Same 2-round + consolidation str
 - Obvious pairings: Kubrick vs. Scorsese (control vs. kinetic); Hitchcock vs. Spielberg (suspense vs. emotion); Deakins vs. Ferretti (light vs. set); Kaufman vs. Rhimes (structural invention vs. serial momentum).
 - Users pass both names; no auto-pairing.
 
-### `/film-crew <source-file> [--director <name>]` (v1.0) — the unique value
+### `/film-crew <source-file> [--director <name>] [--avatar <name>]` (v1.0) — the unique value
 
-The pipeline command. Turns a source file (manuscript chapter, blog post, scene notes) into a complete film treatment across five specialist artifacts.
+The pipeline command. Turns a source file (blog post, manuscript chapter, scene notes) into a HeyGen-ready script plus supplementary craft artifacts across five specialist outputs.
 
 **Execution model: hybrid sequential + parallel.**
 
-**Stage 1 (sequential) — Kaufman adapts prose to screenplay.** Charlie Kaufman is the default adapter because his structural sensibility carries prose-to-script best. Override with `--writer rhimes` for serialized/episodic work. Writes `film/screenplay/<slug>.md` in documented format.
+**Stage 1 (sequential) — Kaufman adapts prose into a HeyGen script.** Charlie Kaufman is the default adapter; his structural sensibility carries prose-to-script best. Override with `--writer rhimes` for serialized/episodic work. Output goes to `film/screenplay/<slug>.heygen.md` in the exact format Section 4 specifies — drop-in replacement for the existing pipeline's `data/heygen-scripts/<slug>.md`.
 
-**Stage 2 (parallel fan-out) — specialists work from the screenplay:**
+**Stage 2 (parallel fan-out) — specialists produce supplementary artifacts from the HeyGen script:**
 
-- Director (default Scorsese, override `--director <name>`) writes scene-breakdown notes → `film/edit-notes/<slug>.md` (director section).
-- Deakins writes shot list → `film/shot-lists/<slug>.md`.
-- Zimmer writes score notes → `film/score-notes/<slug>.md`.
-- Schoonmaker writes cut notes → `film/edit-notes/<slug>.md` (editor section, appended after director's, separated by `---`).
-- Ferretti writes world/set notes → `film/storyboards/<slug>.md`.
+- Director (default Scorsese, override `--director <name>`) writes scene-breakdown notes → `film/edit-notes/<slug>.md` (director section). The director's craft notes are ALSO embedded inline in the HeyGen script as "Director's note:" lines per-scene, so the HeyGen output carries the craft direction even if the other artifacts are ignored.
+- Deakins writes shot list → `film/shot-lists/<slug>.md`. Used only by the Remotion fallback path (HeyGen generates its own visuals).
+- Zimmer writes score notes → `film/score-notes/<slug>.md`. Used only by the Remotion fallback path; the HeyGen agent picks music independently.
+- Schoonmaker writes cut notes → `film/edit-notes/<slug>.md` (editor section, after `---`). Informs pace and scene boundaries in both paths.
+- Ferretti writes world/set notes → `film/storyboards/<slug>.md`. Used only by the Remotion fallback path; HeyGen generates its own visuals.
 
-All five dispatched in a single Agent tool message (parallel).
+All five specialists dispatched in a single Agent tool message (parallel).
 
-**Stage 3 (consolidation)** — single-line summary to stdout: what was written, where, and a one-sentence next-step suggestion.
+**Stage 3 (consolidation)** — single-line summary to stdout: primary output path, supplementary artifact count, next-step suggestion (e.g., "HeyGen script ready at `film/screenplay/<slug>.heygen.md`. Copy to `data/heygen-scripts/<slug>.md` and run the existing pipeline, or run `/filmmakers-debate 'the opening move' scorsese kubrick` if you're unsure about pace.").
 
 **Arguments:**
-- `<source-file>` (required) — path to the source prose. Can be a manuscript chapter, blog post, scene notes.
-- `--director <name>` (optional) — override the default director.
-- `--writer <name>` (optional) — override Kaufman as the adapter.
-- `--scene <slug>` (optional) — override the current scene slug from `.great-authors/project.md`.
 
-**Output compatibility:** every artifact written by `/film-crew` conforms to the specs in `docs/output-formats.md` (see Section 5). Downstream pipelines (garagedoorscience `generate-video-from-blog.ts`, future per-my-last-prompt pipelines) consume the artifacts via their documented format — no prose parsing required.
+- `<source-file>` (required) — path to the source prose. Can be a blog MDX file, manuscript chapter, scene notes.
+- `--director <name>` (optional) — override the default director. Valid: any great-filmmakers director (scorsese, kubrick, hitchcock, kurosawa, spielberg, lynch).
+- `--writer <name>` (optional) — override Kaufman as the adapter. Valid: `kaufman`, `rhimes`.
+- `--avatar <name>` (optional) — HeyGen avatar that will perform. Valid: `maya`, `sara`, `rick`, `margaret`, `seth`. If omitted, auto-select by inspecting source classification (e.g., MDX frontmatter's `classification: maintenance` → maya; `cost` → sara; `comparison` → rick; `safety` → margaret). Default fallback: `maya`.
+- `--voice-id <id>` (optional) — override the HeyGen voice ID. If omitted, derived from the avatar selection.
+- `--scene <slug>` (optional) — override the slug (defaults to source file's basename).
+
+**Avatar → Writer defaults for serialized content:** if `--avatar sara` and no `--writer` passed, auto-default to `rhimes` (scrappy/growth-minded + serialized momentum is her wheelhouse). Writable but predictable.
+
+**Output compatibility:** the primary output (`film/screenplay/<slug>.heygen.md`) matches the existing pipeline's HeyGen script format exactly. A shell one-liner gets it into the pipeline:
+
+```bash
+cp film/screenplay/<slug>.heygen.md ../garagedoorscience/data/heygen-scripts/<slug>.md
+# Then run the existing HeyGen submit step in that project.
+```
+
+Future versions may add an `--emit <path>` flag that writes directly to a sibling pipeline's expected path, but v1.0 keeps file I/O inside the plugin's own `film/` tree for clean boundaries.
 
 ### Shared behavior
 
@@ -284,51 +321,92 @@ All five dispatched in a single Agent tool message (parallel).
 
 ## Section 4 — Output format specifications
 
-`docs/output-formats.md` documents strict formats for each `film/*` artifact type. This is the contract between the plugin and downstream pipelines.
+`docs/output-formats.md` documents strict formats for each `film/*` artifact type. This is the contract between the plugin and downstream pipelines (the existing `garagedoorscience/blog-to-video-generation` pipeline, and future pipelines that copy its interface).
+
+The screenplay format is **a drop-in replacement** for the existing pipeline's HeyGen script at `data/heygen-scripts/<slug>.md`. The other artifacts (shot list, score notes, storyboards, edit notes) serve the Remotion fallback path and human direction; HeyGen itself generates its own visuals and ignores them.
 
 Every artifact ends with a `## Machine-readable footer` section containing YAML that downstream tools can parse without processing the human-readable body.
 
-### `film/screenplay/<slug>.md`
+### `film/screenplay/<slug>.heygen.md` — PRIMARY, matches existing HeyGen script format
 
-**Human-readable body:** standard screenplay markdown.
+Exact-match format from `garagedoorscience/.claude/skills/blog-to-video-generation/SKILL.md`. The filename uses `.heygen.md` suffix so the existing pipeline can pick it up unchanged by copying to `data/heygen-scripts/<slug>.md`.
 
+**Frontmatter (required — the existing pipeline reads these fields):**
+
+```yaml
+---
+avatar_group_id: 6b63c5d1884b4be69b1590a6b78280c0
+avatar_name: Maya
+voice_id: 53c69b4a1aeb44edbce2f050d7a5d3ca
+background: "#FFFFFF"
+target_duration_seconds: 45
+tone: warm, diagnostic, reassuring
+slug: garage-door-opener-lifespan
+blog_url: https://garagedoorscience.com/blog/garage-door-opener-lifespan
+director: scorsese
+adapter: kaufman
+---
 ```
-INT. DINER - NIGHT
 
-The door BANGS open. MARCUS (42, built like a longshoreman, eyes wrong)
-enters fast. Two beats at the threshold. Then moves.
+Two fields are new for this plugin (additive, don't break existing consumers):
+- `director` — which great-filmmakers persona shaped the craft (affects pacing, peak shot, cut rhythm in the scene breakdown)
+- `adapter` — which writer persona adapted the source prose (Kaufman or Rhimes)
 
-                    MARCUS
-          (to the waitress, not looking at her)
-                    Coffee. Black.
+**Body — fixed sections matching the existing skill's template:**
 
-Behind the counter, ELENA (30s) does not move.
+```markdown
+# <Title> — HeyGen Script
 
-                    ELENA
-                    You can pay first.
+## Visual Setup
+- **Avatar:** <avatar_name> (<brief direction, e.g., warm expression, approachable>)
+- **Background:** <background>
+- **Aspect Ratio:** 9:16
+- **On-screen text:** <what graphics, cards, stats appear>
+
+## Scene Breakdown
+
+### Scene 1 — <name> (0:00–0:08)
+**Narration:** "<spoken text>"
+**On-screen text:** "<graphic>"
+**Director's note:** <one-line hint from the filmmaker — peak shot, pace shift, cut rhythm>
+
+### Scene 2 — <name> (0:08–0:18)
+...
+
+## Full Spoken Script (continuous)
+<Complete narration, one paragraph per scene, ready for HeyGen Video Agent submission.>
 ```
+
+**Director's note** is the great-filmmakers-specific addition. HeyGen ignores it (not a standard field), but a human director or a future pipeline that chains filmmaker → HeyGen can read it to refine the storyboard prompt. Scorsese's note might be "hold on the peak image for 2 seconds before cutting to the dialogue"; Kubrick's might be "center-frame everything, no handheld."
 
 **Machine-readable footer:**
 
 ```yaml
 ## Machine-readable footer
 
-```yaml
-scene_id: ch14-confrontation
-source_file: manuscript/chapter-14.md
+scene_id: garage-door-opener-lifespan
+source_file: content/blog/garage-door-opener-lifespan.mdx
 adapter: kaufman
-characters:
-  - marcus
-  - elena
-  - waitress (unnamed)
-location: diner
-time_of_day: night
-estimated_runtime_seconds: 75
-voiceover: false
-```
+director: scorsese
+avatar: maya
+target_duration_seconds: 45
+scenes:
+  - id: scene-1
+    name: The Hook
+    start_sec: 0
+    end_sec: 8
+  - id: scene-2
+    name: Drive Type Breakdown
+    start_sec: 8
+    end_sec: 35
+total_scenes: 4
+voiceover_only: true
 ```
 
-**Consumers use:** character + dialogue pairs for ElevenLabs TTS; `estimated_runtime_seconds` for composition timing; `characters` for casting / avatar selection.
+**Consumers use:**
+- The existing `blog-to-video-generation` pipeline reads frontmatter + body + ignores the machine-readable footer — unchanged from today.
+- A future orchestrator reads the machine-readable footer to route jobs without parsing prose.
+- `/film-crew` regeneration can diff against the footer to avoid re-work.
 
 ### `film/shot-lists/<slug>.md`
 
@@ -534,16 +612,18 @@ Explicitly captured to prevent feature creep and to preserve design rationale wh
 ## Success criteria
 
 - **v0.1 works when:** a user with an existing `.great-authors/`-equipped project can install, run `/film-project-init` to add `film/`, then `/filmmakers-channel scorsese` and get scene-breakdown feedback in Scorsese's voice. At least one save trigger correctly writes to `film/<subdir>/<slug>.md`.
-- **v1.0 works when:** `/film-crew manuscript/chapter-01.md` produces five coherent artifacts in `film/` in under three minutes. Each artifact parses cleanly via its `docs/output-formats.md` spec (tested by a small parser script). At least one artifact references a character from `.great-authors/characters/` — proving bible integration.
-- **The real test:** pointing `garagedoorscience/remotion/scripts/generate-video-from-blog.ts` at a `/film-crew`-generated screenplay produces a valid queue job with minimal glue code.
+- **v1.0 works when:** `/film-crew content/blog/garage-door-opener-lifespan.mdx --director scorsese --avatar maya` produces a valid HeyGen script at `film/screenplay/garage-door-opener-lifespan.heygen.md` that parses against the existing pipeline's format, plus four supplementary artifacts in under three minutes. The HeyGen script's Director's note lines carry Scorsese-flavored craft direction (peak shot, pace, cut rhythm).
+- **The real test:** copying `film/screenplay/<slug>.heygen.md` to `garagedoorscience/data/heygen-scripts/<slug>.md`, then running the existing pipeline's HeyGen Video Agent submit step, produces an avatar-narrated video — no glue code, no prose parsing, no translation.
 
 ## Open risks
 
-- **Output format churn.** Downstream pipelines depend on the footer YAML schema. Changes have blast radius beyond this plugin. Mitigation: `docs/output-formats.md` is the versioned contract; future changes are additive or require major bump.
-- **Kaufman defaulting as adapter.** He might not suit every genre (e.g., pure action). If `/film-crew` produces bad screenplays on action material, user overrides with `--writer rhimes` or we add auto-selection by genre.
-- **Cross-plugin handoffs are natural-language only.** User must recognize and act on them. If this becomes friction, a future `/filmmakers-handoff` command could explicitly route — deferred.
+- **HeyGen script format drift.** The existing pipeline's script format (frontmatter + sections) is our primary output target. If the pipeline changes its format, our plugin output silently diverges. Mitigation: `docs/output-formats.md` is cross-referenced to `garagedoorscience/.claude/skills/blog-to-video-generation/SKILL.md`; any update to that skill triggers a review of ours.
+- **Additive frontmatter fields (`director`, `adapter`) might break the existing pipeline.** If the pipeline strictly validates frontmatter, the new fields cause rejection. Mitigation: verify the pipeline ignores unknown fields (common in YAML parsing) before shipping; if not, gate the new fields behind a flag.
+- **Output format footer churn.** The plugin's own machine-readable YAML footer is separate from the HeyGen frontmatter; future orchestrators depend on it. Versioned in `docs/output-formats.md`; additive changes only.
+- **Kaufman defaulting as adapter.** He might not suit every genre (e.g., pure action, short-form instructional). If `/film-crew` produces bad scripts on specific classifications, auto-select by classification (e.g., `safety` → Rhimes for procedural clarity) or user overrides with `--writer`.
+- **Cross-plugin handoffs are natural-language only.** User must recognize and act on them. If friction, a future `/filmmakers-handoff` command could explicitly route — deferred.
 - **`.great-authors/` directory name** is legacy but persistent. Cleanest rename would break every existing bible; accepted cost.
-- **Scorsese defaulting as director in `/film-crew`.** Reasonable for drama but wrong for horror/comedy/action. User overrides with `--director`; auto-selection from genre signals is a v1.1 improvement if needed.
+- **Scorsese defaulting as director in `/film-crew`.** Reasonable for drama but wrong for horror/comedy/action/instructional. User overrides with `--director`; auto-selection from classification is a v1.1 improvement if needed.
 
 ## Next step
 
