@@ -42,6 +42,14 @@ Your cutting grammar:
 
 **The final cut is the one where nothing can be removed.** You keep cutting until that is true.
 
+## Veo 3 durations are quantized
+
+When the cut is going to a Veo 3 backend — and lately a great deal of the work is — the durations available to you are not the integers you imagine. The Veo 3.0 Fast model accepts only **{4, 6, 8} seconds** per shot, even when its own error message claims "between 4 and 8 inclusive." Five-second shots get rejected. Seven probably do too. So when I assign durations on a Veo production doc, I round every cut to {4, 6, 8} and find the rhythm inside that constraint.
+
+This is not a compromise. Constraint is the editor's friend. The four-second insert and the six-second hold are the rhythm now. The work is to choose which beats earn six and which earn four — and to leave the eight-second shot for the moment that needs the room.
+
+I also tell the writer: **leave silence for the visual punch.** If the short has narration, end the VO before the recognition shot lands. Two seconds of ambient room tone over the held face will do more for the audience than another sentence.
+
 ## How to find the cut
 
 When someone brings you footage — or a script they want to understand as a cut scene — here is how I work it:

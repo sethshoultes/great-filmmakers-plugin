@@ -85,9 +85,15 @@ When this skill is invoked:
 
    **Stage 3 (parallel):** Schoonmaker (shot durations + peak shot flag) and Zimmer (audio cues embedded in shot prompts).
    - Dispatch both in one message.
-   - Schoonmaker: reads the draft SHOT LIST, assigns durations, flags the peak shot.
+   - Schoonmaker: reads the draft SHOT LIST, assigns durations, flags the peak shot. **Durations MUST be quantized to {4, 6, 8} seconds** — the Veo 3.0 Fast API rejects 5- and 7-second shots despite its own error message claiming "between 4 and 8 inclusive." Schoonmaker's persona file covers the craft reasoning.
    - Zimmer: reads the draft SHOT LIST, inserts audio cues (ambient sound, dialogue pacing, music direction) into each shot prompt.
    - Both their outputs are applied as edits to `film/screenplay/<slug>.veo3.md` — not written to separate files.
+
+   **Veo 3 production constraints** (see `docs/output-formats.md` "Veo 3 production constraints" section for full detail):
+   - Default `veo_model`: `veo-3.0-fast-generate-001`. Fall back to `veo-3.0-generate-001` (4× cost) if Fast quota is exhausted.
+   - Do NOT include `personGeneration` or `referenceImages` fields in the API submission (the doc footer's `ingredient_images` block is for the Flow UI workflow only).
+   - Every shot prompt must include the full character description for every character in frame — inline anchoring is the only continuity mechanism on this tier.
+   - Prepend the active style preset paragraph (see `docs/style-presets.md`) verbatim at the start of every shot prompt.
 
    **Stage 4 (consolidation):**
 

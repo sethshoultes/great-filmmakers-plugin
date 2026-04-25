@@ -13,6 +13,19 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
+## What's new in v1.1
+
+Production-grade fixes from the first real-world Veo 3 short ([Three Shapes of the Same Pattern](https://sethshoultes.com/blog/three-shapes.html)):
+
+- **Default Veo model corrected** — `veo-3.0-fast-generate-001` instead of `veo-3.1-fast-generate-preview`. The 3.1 previews reject all human subjects on the standard Gemini API tier; 3.0 Fast is the working option at $0.10/sec.
+- **Shot durations quantized to {4, 6, 8}** — Veo 3.0 Fast rejects 5- and 7-second shots despite docs claiming "between 4 and 8 inclusive." Schoonmaker's persona file now teaches this constraint as part of the cutting craft. `/film-crew --backend veo3` honors it.
+- **`personGeneration` and `referenceImages` removed from API output** — both are rejected on the Gemini API tier. The `ingredient_images` block remains in the doc footer for the Veo Flow UI workflow but is now correctly documented as Flow-only.
+- **Style presets** — pen-and-ink editorial is the new default style anchor (verified to bypass the photorealistic-human content gate). See `docs/style-presets.md` for the library and how to add more.
+- **CLAUDE.md project template** — `/film-project-init` now drops a CLAUDE.md that establishes Claude as the orchestrator (dispatching personas via the Agent tool) rather than channeling them inline.
+- **Schoonmaker craft note** — added a "leave silence for the visual punch" principle for shorts with VO; verified empirically by leaving the last ~10s of the trilogy short narration-free over the recognition push-in.
+
+Full constraint reference: `docs/output-formats.md` § "Veo 3 production constraints."
+
 ## What's in v1.0
 
 ### 12 Filmmaker Personas

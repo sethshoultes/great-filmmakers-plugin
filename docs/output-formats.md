@@ -162,7 +162,7 @@ characters:
     name: <name>
 locations:
   - <location_slug>
-veo_model: veo-3.1-fast
+veo_model: veo-3.0-fast-generate-001
 aspect_ratio: 16:9
 ingredient_images:
   cast:
@@ -171,14 +171,25 @@ ingredient_images:
     - LOCATIONS/<location_slug>.jpg
 ```
 
+### Veo 3 production constraints (Gemini API mldev tier)
+
+These are real, empirically-verified API constraints. Production docs that violate them get rejected at submit time — Schoonmaker, the writer, and `/film-crew` MUST honor all of them.
+
+- **Default model:** `veo-3.0-fast-generate-001` ($0.10/sec at 720p). Standard `veo-3.0-generate-001` is the fallback when Fast hits its daily quota — same content gates, ~4× the cost. Avoid Veo 3.1 preview models on this tier; they reject all human subjects.
+- **Shot durations are quantized to {4, 6, 8} seconds.** The error message says "between 4 and 8 inclusive" but 5- and 7-second shots get rejected. Schoonmaker's cut rhythm must round to one of {4, 6, 8}.
+- **Do NOT pass `personGeneration`** — every value (`allow_all`, `allow_adult`, `dont_allow`) is rejected on this tier. Stylized/animated humans render fine without it; photorealistic humans get content-gated separately.
+- **Do NOT pass `referenceImages` to the API.** Not supported on `veo-3.0-fast-generate-001`; Veo 3.1 preview accepts the field but rejects the submission anyway. The `ingredient_images` block in the footer is for the Veo Flow UI workflow only — direct-API renders rely on inline character anchoring instead (full character description repeated verbatim in every shot the character appears in).
+- **Pacing:** 45–60s between submits to avoid per-minute 429s. Daily/rolling-24h quota tops out around 10–15 calls on tier 1.
+
 ### Which persona fills which section
 
 - **CAST:** Ferretti (physical/costume specificity) + writer (names and roles)
 - **LOCATIONS:** Ferretti
 - **VISUAL GRAMMAR:** Deakins (camera + lens + movement vocabulary)
 - **NEGATIVE PROMPT:** Ferretti + director (things that violate director's non-negotiables)
-- **SHOT LIST prompts:** director + writer using VISUAL GRAMMAR terms, with Deakins consulting on camera, Ferretti on set/prop detail, Zimmer's audio cues embedded
-- **Durations:** Schoonmaker (cut rhythm determines shot length)
+- **SHOT LIST prompts:** director + writer using VISUAL GRAMMAR terms, with Deakins consulting on camera, Ferretti on set/prop detail, Zimmer's audio cues embedded. Each shot prompt MUST include the full character description for every character in frame — Veo cannot use reference images on this tier, so inline anchoring is the continuity mechanism.
+- **Durations:** Schoonmaker (cut rhythm determines shot length, **rounded to {4, 6, 8}**)
+- **Style anchor:** A style preset paragraph is prepended verbatim to every shot prompt. See `docs/style-presets.md` (pen-and-ink editorial is the v1.1 default; future presets: noir, photoreal, Ghibli)
 
 ---
 
