@@ -221,6 +221,40 @@ Available on the upgraded Gemini API tier. Use when character continuity matters
 
 The `ingredient_images` block in the production-doc footer feeds Path B directly when a writer chooses reference images. It also continues to support the Veo Flow UI workflow.
 
+#### Path C — Kling 2.5 Turbo image-to-video (single-clip strength)
+
+Available with a Kling API account (HMAC-signed JWT auth using access+secret keys). Use when one or two cinematic clips need stronger motion physics than Veo's text-to-video, AND the source still can be art-directed in advance.
+
+- **Service:** Kling 2.5 Turbo (`kling-v2-5-turbo`) image-to-video, std mode.
+- **Pipeline:** generate a composite still first (Phoenix or gpt-image-2), then animate via Kling.
+- **Durations:** 5 or 10 seconds only. Schoonmaker's mixed-rhythm cuts collapse here.
+- **Aspect ratios:** 16:9, 9:16, or 1:1.
+- **Cost:** ~$1 per 5s clip (std mode).
+- **When to choose Kling over Veo:** single cinematic shot with strong motion physics, art-directed source still, no need for multi-shot continuity.
+- **When NOT to choose Kling for series work:** image-to-video composes each shot from its own still, so composition drift between shots compounds. The trilogy short re-render via Kling produced figures that read as "grounded in a stage floor" because the Phoenix stills introduced floor surfaces that Veo's text-to-video would have rendered as void. **For multi-shot stylized series work where aesthetic conventions must hold across shots, prefer Veo's text-to-video (Path A or B) over Kling's image-to-video.**
+
+#### Path D — Leonardo Motion 2.0 image-to-video (cheap atmospheric)
+
+Available with a Leonardo API account.
+
+- **Service:** Leonardo Motion 2.0 (`generations-image-to-video`), 720p resolution.
+- **Pipeline:** chain Phoenix `imageId` directly into Motion 2.0 (no upload needed; `imageType: "GENERATED"`).
+- **Durations:** 5 seconds.
+- **Cost:** ~$0.05 per 5s clip — by far the cheapest of the three video-gen services.
+- **When to choose Leonardo Motion:** background motion, atmospheric clips, B-roll, anywhere character continuity doesn't matter. Cost floor.
+- **When NOT to choose Leonardo Motion:** any shot with character identity that must hold. Motion 2.0 has documented character drift — figures shift unnaturally even when prompted to hold poses. The trilogy multi-character test showed all three figures shifting in unintended ways.
+
+### Choosing between A, B, C, D
+
+| Project shape | Path |
+|---------------|------|
+| Multi-shot stylized series with character continuity | **A** (Veo 3.0 Fast + inline anchoring) — mixed durations, project-scale composition consistency |
+| Stronger character continuity than inline anchoring | **B** (Veo 3.1 Fast preview + reference images) — every shot 8 seconds at 16:9 |
+| Single cinematic clip with art-directed still + strong motion physics | **C** (Kling 2.5 Turbo image-to-video) — 5 or 10s, image-to-video grounding |
+| Cheap atmospheric B-roll, character continuity not required | **D** (Leonardo Motion 2.0) — $0.05/clip, drift acceptable |
+
+The default for trilogy/series work is **Path A**. Promote to Path B for character-heavy continuity work. Pick Path C for one-off cinematic shots. Pick Path D when cost is the primary constraint.
+
 ### Which persona fills which section
 
 - **CAST:** Ferretti (physical/costume specificity) + writer (names and roles)
@@ -228,7 +262,7 @@ The `ingredient_images` block in the production-doc footer feeds Path B directly
 - **VISUAL GRAMMAR:** Deakins (camera + lens + movement vocabulary)
 - **NEGATIVE PROMPT:** Ferretti + director (things that violate director's non-negotiables)
 - **SHOT LIST prompts:** director + writer using VISUAL GRAMMAR terms, with Deakins consulting on camera, Ferretti on set/prop detail, Zimmer's audio cues embedded. For Path A (Veo 3.0), each shot prompt MUST include the full character description for every character in frame — inline anchoring is the continuity mechanism. For Path B (Veo 3.1 with refs), the prompt may reference characters more loosely ("the man depicted in the first reference image") since the refs do the continuity work.
-- **Durations:** Schoonmaker (cut rhythm determines shot length, **rounded to {4, 6, 8}** for Path A, **fixed at 8** for Path B)
+- **Durations:** Schoonmaker (cut rhythm determines shot length, **rounded to {4, 6, 8}** for Path A, **fixed at 8** for Path B, **5 or 10** for Path C, **5 only** for Path D)
 - **Style anchor:** A style preset paragraph is prepended verbatim to every shot prompt. See `docs/style-presets.md` (pen-and-ink editorial is the v1.1 default; future presets: noir, photoreal, Ghibli)
 
 ---

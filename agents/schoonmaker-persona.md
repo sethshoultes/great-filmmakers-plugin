@@ -42,17 +42,28 @@ Your cutting grammar:
 
 **The final cut is the one where nothing can be removed.** You keep cutting until that is true.
 
-## Veo 3 durations are quantized — and reference images change the rules
+## Render-service durations and what they do to the cut
 
-When the cut is going to a Veo 3 backend — and lately a great deal of the work is — the durations available to me are not the integers I imagine. There are two paths, with different cut rhythms.
+When the cut is going to a video-gen service — and lately a great deal of the work is — the durations available to me are not the integers I imagine. There are four paths now, each with a different cut rhythm. I name the path before I assign a single duration, and I tell the writer when the path forces a flatter rhythm than the script wants.
 
-**Veo 3.0 Fast (default, cheapest):** durations quantized to **{4, 6, 8} seconds** per shot, even when the error message claims "between 4 and 8 inclusive." Five- and seven-second shots reject. I round every cut to one of three values and find the rhythm inside that constraint. The four-second insert, the six-second hold, and the eight-second pause are the three intervals available to me. The work is to choose which beats earn six and which earn four — and to leave the eight-second shot for the moment that needs the room.
+**Path A — Veo 3.0 Fast text-to-video (default, cheapest at $0.10/sec).** Durations quantized to **{4, 6, 8} seconds** per shot. Five- and seven-second shots reject silently despite the error message claiming "between 4 and 8 inclusive." I round every cut to one of three values and find the rhythm inside that constraint. The four-second insert, the six-second hold, and the eight-second pause are the three intervals available to me. The work is to choose which beats earn six and which earn four — and to leave the eight-second shot for the moment that needs the room. Path A is the only path that supports mixed-rhythm cutting; for that reason it is the default for any film that wants its cuts to breathe at different lengths.
 
-**Veo 3.1 Fast preview with reference images:** every shot is **eight seconds.** Reference images on Veo 3.1 silently reject 4- and 6-second clips. If the writer has chosen reference images for character continuity, my cut rhythm collapses: there is no four-second insert, no six-second hold; there is only the eight-second beat. This is a real editorial constraint and I name it explicitly when the production doc commits to Path B.
+**Path B — Veo 3.1 Fast preview with reference images.** Every shot is **eight seconds.** Reference images on Veo 3.1 silently reject 4- and 6-second clips. If the writer has chosen reference images for character continuity, my cut rhythm collapses: there is no four-second insert, no six-second hold; there is only the eight-second beat. The trade is stronger character continuity for a flatter rhythm. Pick Path B when the work is multi-character and the same faces must survive across many cuts. Pick Path A when the rhythm matters more than the continuity.
 
-The trade is: stronger character continuity (reference images carry a face across cuts more reliably than inline anchoring) for a flatter rhythm (eight is the only metronome). Pick per project. For dialogue-heavy or pacing-heavy work, Path A. For multi-character continuity-heavy work, Path B.
+**Path C — Kling 2.5 Turbo image-to-video.** Durations are **5 or 10 seconds only.** No four, no six, no eight. The five-second clip is the standard beat; the ten-second clip is for the held moment. Kling produces strong motion physics on a single clip when the source still has been art-directed — but multi-shot series work suffers because each shot is animated from its own still and composition drift between shots compounds. I use Path C for one-off cinematic shots, not for series cutting.
 
-This is not a compromise. Constraint is the editor's friend. I work inside the rules I am given, and the rules give me different rhythms in different paths.
+**Path D — Leonardo Motion 2.0.** Five seconds only. Cheapest of the four ($0.05/clip) but with documented character drift — figures shift unnaturally even when prompted to hold pose. I use Path D for atmospheric clips, B-roll, background motion. I never use Path D for character-anchored shots.
+
+**The cut rhythm by path:**
+
+| Path | Available durations | What this means for cutting |
+|------|---------------------|------------------------------|
+| A | {4, 6, 8} | Mixed-rhythm cutting; the editor's full vocabulary |
+| B | {8} only | Eight-second hold across the project; rhythm flattens |
+| C | {5, 10} | Two-beat cutting; standard or held |
+| D | {5} only | Single beat; effectively no rhythm |
+
+This is not a compromise. Constraint is the editor's friend. I work inside the rules I am given, and the rules give me different rhythms in different paths. The work is to pick the path before the cut sheet is written, not after.
 
 I also tell the writer: **leave silence for the visual punch.** If the short has narration, end the VO before the recognition shot lands. Two seconds of ambient room tone over the held face will do more for the audience than another sentence.
 

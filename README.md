@@ -15,6 +15,51 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
+## What's new in v1.4
+
+Two new render paths and a new image-gen tier system, derived from a head-to-head shootout between Veo 3.1 Fast preview, Kling 2.5 Turbo, and Leonardo Motion 2.0 plus a three-way image-gen comparison (Imagen 4 Fast, Leonardo Phoenix, gpt-image-2 high).
+
+### Four render paths now documented (was two)
+
+- **Path A** (Veo 3.0 Fast text-to-video, default): mixed {4, 6, 8}-second durations, inline character anchoring, $0.10/sec at 720p. **Wins for multi-shot stylized series work.**
+- **Path B** (Veo 3.1 Fast preview with reference images): every shot 8s at 16:9, up to 3 character refs, stronger continuity than inline anchoring.
+- **Path C** (Kling 2.5 Turbo image-to-video, NEW): 5 or 10s clips, strong motion physics, image-to-video grounding via composite still. Use for one-off cinematic shots, NOT series work — image-to-video composition drift between shots compounds.
+- **Path D** (Leonardo Motion 2.0 image-to-video, NEW): 5s clips at $0.05 each — cheapest path. Documented character drift; use only for atmospheric B-roll where character identity doesn't matter.
+
+The trilogy short (`/blog/videos/trilogy.mp4`) was re-rendered via Kling Path C as a stress test. Result: Veo Path A still won at project scale because text-to-video keeps composition consistent across shots, while image-to-video pipelines (Kling, Leonardo Motion) inherit any composition flaws from their source stills. Documented in [video-gen-services-comparison](https://github.com/sethshoultes/brain/blob/main/learnings/video-gen-services-comparison.md).
+
+### Image-gen tier system
+
+Ferretti's persona file now teaches three tiers for reference and hero image generation:
+
+- **Tier 1** (Imagen 4 Fast, $0.02, 5–10s) — default for reference images, throwaway exploration, iterative work
+- **Tier 1.5** (Leonardo Phoenix, $0.05, 30–45s) — stylized editorial work; "Ghibli-like" register on pen-and-ink prompts; chains directly into Leonardo Motion 2.0 via `imageId`
+- **Tier 2** (gpt-image-2 high, $0.20, 3–6 min) — hero shots where the image IS the deliverable; dense in-image text rendering; 4K final assets
+
+**Meta-lesson:** tier-2 fidelity gets bounded when the still is re-rendered downstream by Veo or Kling. Don't pay for tier-2 on a still that's going to be a Veo reference image; pay for tier-2 only when the image will be displayed at the highest resolution as the canonical asset. Documented in [image-gen-tier-system](https://github.com/sethshoultes/brain/blob/main/learnings/image-gen-tier-system.md).
+
+### Schoonmaker's craft note expanded
+
+Schoonmaker now teaches the cut rhythms available in all four paths:
+
+| Path | Available durations |
+|------|---------------------|
+| A | {4, 6, 8} — mixed-rhythm cutting |
+| B | {8} only |
+| C | {5, 10} — two-beat cutting |
+| D | {5} only |
+
+The trade-off table makes the editorial cost of each path explicit. Pick the path before the cut sheet is written, not after.
+
+### Files changed
+
+- `docs/output-formats.md` — Path C (Kling) and Path D (Leonardo Motion) sections + four-way decision table
+- `agents/ferretti-persona.md` — image-gen tier choice section, framing rule, pipeline match rule
+- `agents/schoonmaker-persona.md` — render-service durations now covers all four paths
+- `MANUAL.md` Section 9 — re-titled "Video gen production constraints" (was "Veo 3 production constraints"); added Path C, Path D, and the choosing-between-paths matrix
+- `README.md` — v1.4 announcement (this section)
+- `.claude-plugin/plugin.json` + `package.json` — version 1.4.0
+
 ## What's new in v1.3
 
 Reference images on Veo 3.1 actually work — v1.1's claim that they don't was wrong, and a re-test on the upgraded Gemini API tier proved the error was in the probe, not the API. v1.3 corrects the documentation, adds a second production path, and ships an honest meta-learning.

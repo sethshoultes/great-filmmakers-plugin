@@ -378,9 +378,9 @@ Programmatic composition: narration over a sequence of slides. Custom photos, br
 
 ---
 
-## 9. Veo 3 production constraints
+## 9. Video gen production constraints
 
-The Gemini API tier has hard rules. There are now **two paths** depending on which Veo model you target:
+There are now **four paths** for rendering shots in the production doc, across three different services. v1.4 added Path C (Kling) and Path D (Leonardo Motion) after a head-to-head test against Veo. The default is still Path A (Veo 3.0 Fast text-to-video) for trilogy/series work — that test confirmed Veo's text-to-video composition consistency wins at project scale. But for one-shot cinematic clips, atmospheric B-roll, or cost-floor renders, the alternative paths are real options.
 
 ### Path A — Veo 3.0 Fast + inline anchoring (default, cheapest)
 
@@ -438,17 +438,75 @@ Notes:
 - `referenceType` is `"asset"` lowercase. `"ASSET"` rejects.
 - The `image` object uses **flat** `bytesBase64Encoded` + `mimeType`, NOT the `inlineData: {mimeType, data}` wrapper Google's docs page shows. Trust the API behavior over the docs page on this field.
 
-### Choosing between A and B
+### Path C — Kling 2.5 Turbo image-to-video (single-clip strength)
+
+Available with a Kling API account (HMAC-signed JWT auth using access+secret keys). Strong motion physics; image-to-video grounding. Use for one-off cinematic shots when the source still can be art-directed.
+
+- **Service:** Kling 2.5 Turbo (`kling-v2-5-turbo`), std mode, image-to-video.
+- **Pipeline:** generate a composite still first (Phoenix or gpt-image-2), then animate.
+- **Durations:** **5 or 10 seconds only.**
+- **Aspect ratios:** 16:9, 9:16, or 1:1.
+- **Cost:** ~$1 per 5s clip.
+- **Auth:** HMAC-SHA256-signed JWT with `iss` (access key), `exp` (now+1800), `nbf` (now-5).
+- **Endpoint:** `POST https://api-singapore.klingai.com/v1/videos/image2video`
+
+Request shape:
+
+```json
+{
+  "model_name": "kling-v2-5-turbo",
+  "image": "<base64 of source still, no data:image/png;base64, prefix>",
+  "prompt": "<motion prompt>",
+  "duration": "5",
+  "mode": "std",
+  "aspect_ratio": "16:9"
+}
+```
+
+**When NOT to use Path C for series work:** the trilogy short re-render via Kling produced figures that read as "grounded in a stage floor" because the Phoenix stills introduced floor surfaces that Veo's text-to-video would have rendered as void. Image-to-video composes each shot from its own still, so composition drift between shots compounds. **For multi-shot stylized series work, prefer Path A or B over Path C.**
+
+### Path D — Leonardo Motion 2.0 image-to-video (cheap atmospheric)
+
+Available with a Leonardo API account.
+
+- **Service:** Leonardo Motion 2.0, image-to-video.
+- **Pipeline:** chain Phoenix `imageId` directly into Motion 2.0 (no upload step; `imageType: "GENERATED"`).
+- **Durations:** **5 seconds.**
+- **Resolution:** RESOLUTION_480 or RESOLUTION_720.
+- **Cost:** ~$0.05 per 5s clip — **cheapest of the four paths**.
+- **Endpoint:** `POST https://cloud.leonardo.ai/api/rest/v1/generations-image-to-video`
+
+Request shape:
+
+```json
+{
+  "imageType": "GENERATED",
+  "imageId": "<Phoenix gen id>",
+  "prompt": "<motion prompt>",
+  "resolution": "RESOLUTION_720",
+  "frameInterpolation": true,
+  "promptEnhance": true,
+  "isPublic": false
+}
+```
+
+**When NOT to use Path D for character work:** Motion 2.0 has documented character drift — figures shift unnaturally even when prompted to hold pose. The trilogy three-character test showed all three figures drifting in unintended ways. **Use Path D only for atmospheric clips, B-roll, or backgrounds where character identity doesn't need to hold.**
+
+### Choosing between A, B, C, D
 
 | Question | Path |
 |----------|------|
-| Need mixed durations (4s, 6s, 8s) for cut rhythm? | A — every shot in B is 8 seconds |
-| Need stronger character continuity than verbatim text repetition? | B |
-| Cost-sensitive? | A — Veo 3.0 Fast is the cheapest working model |
-| Multi-character scene, strict face/look continuity? | B — up to 3 reference images per shot |
-| Aspect ratio other than 16:9? | A — B is locked to 16:9 with refs |
+| Multi-shot stylized series with character continuity | **A** — Veo 3.0 Fast text-to-video, mixed {4, 6, 8} durations |
+| Stronger character continuity than inline anchoring | **B** — Veo 3.1 Fast preview with refs, every shot 8s @ 16:9 |
+| Single cinematic clip with art-directed still | **C** — Kling 2.5 Turbo image-to-video, 5 or 10s |
+| Cheap B-roll, atmospheric clips, no character continuity needed | **D** — Leonardo Motion 2.0 image-to-video, 5s, $0.05/clip |
+| Mixed durations needed (4, 6, 8 in same project) | **A only** — the other paths fix duration |
+| Lowest cost | **D** ($0.05/clip) |
+| Best motion physics on a single shot | **C** |
 
-The default is A. Switch to B only when continuity demands outweigh rhythm flexibility.
+**The default is A.** Switch to B for character-heavy continuity. Pick C for one-off cinematic shots. Pick D only when cost is the primary constraint and continuity doesn't matter.
+
+**The trilogy short** lives at Path A — the visual proof that text-to-video composition consistency wins at project scale. The Kling re-render at `/tmp/trilogy-kling/` is the counter-evidence: same prompts, image-to-video pipeline, "grounded floor" artifact across multiple shots.
 
 ### Default model
 
