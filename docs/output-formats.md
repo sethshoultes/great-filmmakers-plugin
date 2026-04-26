@@ -398,13 +398,35 @@ Used for: book illustrations (chapter inline placement, MDX), video keyframes (i
 [same structure]
 ```
 
-### Slug convention
+### Slug convention (canonical, v1.8+)
 
-`<chapter-or-prefix>-<scene-slug>` — e.g., `ch01-hands-folding`, `ch02-compound-gate`, `kf-truck-departing`. One regex matches all in the render scripts:
+**Single naming convention across all PROMPTS.md files in the constellation:** `<prefix>-<scene-slug>`.
+
+The prefix names the role or location of the cue point; the scene-slug names the specific moment. Together they produce a unique, sortable, render-script-safe filename.
+
+**Common prefixes:**
+
+| Prefix | Use case | Example slugs |
+|---|---|---|
+| `ch01`, `ch02`, … | Chapter illustrations (per-chapter, in-line) | `ch01-hands-folding`, `ch02-compound-gate` |
+| `kf` | Keyframes for image-to-video conditioning | `kf-truck-departing`, `kf-figure-walking` |
+| `cover` | Cover concept stills | `cover-hero`, `cover-back` |
+| `social` | Social-promo stills derived from the same source | `social-square-1`, `social-vertical-2` |
+| `<custom>` | Project-specific (named in the brief) | `prologue-roadside`, `epilogue-cemetery` |
+
+**The regex that matches all of them:**
 
 ```
-### ([a-z0-9][a-z0-9_\-]*)\.png
+### ([a-z][a-z0-9_\-]*)\.png
 ```
+
+This regex appears in `render_keyframes.py`, `render_book_illustrations.py`, and `wire_book_illustrations.py` (templated as of great-filmmakers v1.8). One pattern, one render script per backend, no per-project regex divergence.
+
+**Why this matters:** earlier projects produced `### kf-<name>.png` for chapter-1 and `### ch<NN>-<name>.png` for chapters 2-N, and the divergence required two different render scripts and two different regexes. The single naming convention lets one regex handle both chapter keyframes (image-to-video) and book illustrations (chapter inline). The render script doesn't need to know whether a slug is `kf-*` or `ch01-*` — it just iterates matched blocks.
+
+**Naming guidance for `/filmmakers-build-keyframes`:**
+
+When the source file's name signals a chapter (e.g., `chapter-01-yellow-knolls.md`), use the `chNN-` prefix. When it signals video keyframes (the `--out-dir` is a `keyframes/` directory or `--style-preset` indicates video), use the `kf-` prefix. When the use case is cover or marketing visual, use the explicit prefix (`cover-`, `social-`). The director persona makes this choice; the orchestrator may override via the brief.
 
 ### Style anchor handling
 

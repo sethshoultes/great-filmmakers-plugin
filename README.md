@@ -15,6 +15,53 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
+## What's new in v1.8
+
+Papercut fixes from real production use, plus a unified slug naming convention and a content-policy pre-flight scanner.
+
+### Unified slug convention
+
+`<prefix>-<scene-slug>` across all PROMPTS.md files. One regex matches all backends:
+
+```
+### ([a-z][a-z0-9_\-]*)\.png
+```
+
+Common prefixes documented: `chNN-` (chapter illustrations), `kf-` (keyframes for image-to-video), `cover-` (cover concepts), `social-` (social-promo stills). One naming convention, one render script per backend, no per-project regex divergence. See `docs/output-formats.md` § "Slug convention (canonical, v1.8+)" for the full guidance.
+
+### `templates/scripts/wire_book_illustrations.py` — new template
+
+Lifts the wiring script from a real project into the plugin's templates. Reads PROMPTS.md (with `--include-prose-anchors`), copies rendered PNGs into the book site's `public/illustrations/`, inserts `<Illustration>` components into chapter MDX at the matched prose-anchor paragraph.
+
+**Fuzzy anchor matching (the v1.8 fix):** when the director's prose anchor was paraphrased slightly from the manuscript source (common during Hitchcock-style cue identification), the previous substring matcher missed the placement. The template now does three passes: substring-60, substring-30, then `difflib.SequenceMatcher.ratio()` with a configurable threshold (default 0.7). Stdlib only — no RapidFuzz dependency.
+
+### Browser User-Agent default in render scripts
+
+Leonardo's CDN returns 403 to default Python urllib User-Agents. `render_kling.py` and `render_veo.py` templates now set a browser User-Agent (`Mozilla/5.0 ... Chrome/120.0.0.0 Safari/537.36`) on every download request preventatively, regardless of backend. Saves the next debugging round when a future CDN does the same thing.
+
+### `--check-content-policy` flag for `render_veo.py`
+
+Veo refuses many body/violence-adjacent prompts in crime fiction. The new flag (default `warn`; modes `off`, `warn`, `strict`) reads `.great-authors/project.md` for the genre, scans each shot's prompt for refusal-prone keywords, and surfaces flagged shots before submission.
+
+```
+→ content-policy pre-flight scan
+   project genre is 'literary mystery' — scanning shots for refusal-prone prompts.
+   ⚠️  3 shot(s) contain refusal-prone keywords:
+     [E1a] keywords: body, blood
+           preview: A wide shot of the wash. The body lies on its side...
+   Recommendations:
+   - Sanitize the prompts (drop the keyword; describe consequence rather than action)
+   - Use Kling for these shots (more permissive on stylized content)
+   - Run with --check-content-policy=off to bypass
+   Continue with submission anyway? [y/N]:
+```
+
+`--check-content-policy=strict` aborts before submission instead of prompting. The check is a heuristic — Veo's policy is opaque and changes — but it surfaces risk before quota is burned.
+
+### Companion change in great-authors v1.6
+
+Phase 7 closing of `/authors-orchestrate-novel` now surfaces the publication handoff to `great-publishers`, the visual handoff to `great-filmmakers`, and the marketing handoff to `great-marketers`. The orchestrate-novel pipeline is no longer the end of the road — it's the bridge to the rest of the constellation.
+
 ## What's new in v1.7
 
 Codifies the keyframe-prompt brief that's been hand-written for too many projects, and documents the image-gen backend choices that any project producing illustrations will face.

@@ -96,6 +96,14 @@ MAX_BACKOFF_SECONDS = 600
 MAX_RETRIES = 4
 JWT_TTL_SECONDS = 1800                # 30 min
 
+# Browser User-Agent for download requests. Some CDNs (notably Leonardo's)
+# return 403 to default Python User-Agents; using a browser UA preventatively
+# avoids the same trap on Kling's CDN if it changes.
+DOWNLOAD_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+)
+
 
 # -----------------------------------------------------------------------------
 # JWT signing (HS256), stdlib-only — no PyJWT dependency
@@ -261,7 +269,8 @@ def poll_task(access: str, secret: str, task_id: str, mode: str) -> str:
 
 def download_video(url: str, out_path: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    with requests.get(url, stream=True, timeout=300) as r:
+    headers = {"User-Agent": DOWNLOAD_USER_AGENT}
+    with requests.get(url, stream=True, timeout=300, headers=headers) as r:
         r.raise_for_status()
         with out_path.open("wb") as f:
             for chunk in r.iter_content(chunk_size=64 * 1024):

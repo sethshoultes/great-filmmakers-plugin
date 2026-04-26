@@ -82,6 +82,84 @@ POLL_INTERVAL_SECONDS = 15
 MAX_POLL_ATTEMPTS = 80                # 80 * 15s = 20 min total wait per shot
 LEGAL_DURATIONS = (4, 6, 8)
 
+# Browser User-Agent for download requests. Some CDNs (notably Leonardo's)
+# return 403 to default Python urllib User-Agents; using a browser UA
+# preventatively avoids the same trap on any future CDN. Set on every
+# download request, even where the API doesn't require it.
+DOWNLOAD_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+)
+
+# Genres for which Veo is likely to refuse body/death/violence-adjacent prompts.
+# Used by the --check-content-policy pre-flight scanner. Read from
+# .great-authors/project.md's `## Genre` section.
+CONTENT_POLICY_GENRES = ("mystery", "crime", "thriller", "noir", "horror", "war")
+
+# Keywords that frequently trigger Veo's content-policy refusal in crime fiction.
+# The scanner does substring (case-insensitive) matching on the shot prompt.
+# Not exhaustive — Veo's actual policy is opaque. Used as a heuristic to surface
+# RISK before submission, not to guarantee acceptance/refusal.
+CONTENT_POLICY_KEYWORDS = (
+    # Bodies and death
+    "body", "corpse", "dead", "death", "murder", "killed", "kill", "killer",
+    "victim", "wound", "blood", "bleeding", "bullet", "stabbed",
+    # Violence and weapons
+    "weapon", "gun", "knife", "rifle", "pistol", "violent", "violence",
+    "attack", "assault", "strangled", "choking",
+    # Body parts in distress register
+    "throat", "chest wound", "head wound",
+)
+
+
+def read_project_genre(project_root: Path) -> str | None:
+    """Return the genre field from .great-authors/project.md, lowercased."""
+    bible_path = project_root / ".great-authors" / "project.md"
+    if not bible_path.exists():
+        return None
+    text = bible_path.read_text()
+    # Look for `## Genre` heading followed by the next non-empty line.
+    match = re.search(r"^##\s+Genre\s*\n+([^\n#]+)", text, re.MULTILINE)
+    if not match:
+        return None
+    return match.group(1).strip().lower()
+
+
+def check_content_policy(
+    shots: list[dict[str, Any]], project_root: Path,
+) -> list[dict[str, Any]]:
+    """Pre-flight scanner — return list of shots flagged as refusal-prone.
+
+    Reads project genre from .great-authors/project.md. If genre is in
+    CONTENT_POLICY_GENRES, scans each shot prompt for keywords in
+    CONTENT_POLICY_KEYWORDS. Returns one entry per shot with at least one
+    matched keyword.
+
+    Heuristic — Veo's content policy is opaque and changes. The scanner
+    surfaces risk before submission so the user doesn't burn quota on
+    prompts that will refuse mid-pipeline.
+    """
+    genre = read_project_genre(project_root)
+    if not genre:
+        print("⚠️  No project genre found at .great-authors/project.md — skipping content-policy scan.")
+        return []
+    if not any(g in genre for g in CONTENT_POLICY_GENRES):
+        print(f"   project genre is '{genre}' — content-policy scan not applicable.")
+        return []
+
+    print(f"   project genre is '{genre}' — scanning shots for refusal-prone prompts.")
+    flagged: list[dict[str, Any]] = []
+    for shot in shots:
+        prompt_lower = shot["prompt"].lower()
+        matched = [kw for kw in CONTENT_POLICY_KEYWORDS if kw in prompt_lower]
+        if matched:
+            flagged.append({
+                "id": shot["id"],
+                "matched_keywords": matched,
+                "prompt_preview": shot["prompt"][:150],
+            })
+    return flagged
+
 
 def get_api_key() -> str:
     key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
@@ -251,7 +329,7 @@ def download_video(uri: str, out_path: Path, *, api_key: str) -> None:
     sep = "&" if "?" in uri else "?"
     url = f"{uri}{sep}key={urllib.parse.quote(api_key)}"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    req = urllib.request.Request(url)
+    req = urllib.request.Request(url, headers={"User-Agent": DOWNLOAD_USER_AGENT})
     with urllib.request.urlopen(req, timeout=300) as resp, out_path.open("wb") as f:
         while True:
             chunk = resp.read(64 * 1024)
@@ -320,6 +398,17 @@ def main() -> int:
     parser.add_argument("--state-file",
                         help="Render-state JSON path (default: <out-dir>/_render_state.json)")
     parser.add_argument("--dry-run", action="store_true", help="Parse doc, do not call API")
+    parser.add_argument(
+        "--check-content-policy",
+        choices=["off", "warn", "strict"],
+        default="warn",
+        help=(
+            "Pre-flight content-policy scan (default: warn). "
+            "off = no scan. "
+            "warn = scan, list flagged shots, prompt user to continue. "
+            "strict = scan, abort if any shot is flagged."
+        ),
+    )
     args = parser.parse_args()
 
     doc_path = Path(args.doc).resolve()
@@ -346,6 +435,36 @@ def main() -> int:
 
     if args.dry_run:
         return 0
+
+    # Pre-flight content-policy scan (item #9 from trilogy improvements).
+    if args.check_content_policy != "off":
+        print()
+        print("→ content-policy pre-flight scan")
+        flagged = check_content_policy(shots, project_root)
+        if flagged:
+            print(f"   ⚠️  {len(flagged)} shot(s) contain refusal-prone keywords:")
+            for f in flagged:
+                kws = ", ".join(f["matched_keywords"])
+                print(f"     [{f['id']}] keywords: {kws}")
+                print(f"           preview: {f['prompt_preview']}...")
+            print()
+            print(
+                "   Veo refuses many body/violence-adjacent prompts in crime fiction.\n"
+                "   Recommendations:\n"
+                "   - Sanitize the prompts (drop the keyword; describe consequence rather than action)\n"
+                "   - Use Kling for these shots (kling-side scripts are more permissive on stylized content)\n"
+                "   - Run this script with --check-content-policy=off to bypass this check entirely"
+            )
+            if args.check_content_policy == "strict":
+                sys.stderr.write("\nERROR: --check-content-policy=strict — aborting before submission.\n")
+                return 3
+            try:
+                response = input("   Continue with submission anyway? [y/N]: ").strip().lower()
+            except EOFError:
+                response = ""
+            if response not in ("y", "yes"):
+                print("   Aborted.")
+                return 0
 
     api_key = get_api_key()
     state = load_state(state_path)
