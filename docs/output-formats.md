@@ -353,6 +353,162 @@ Machine-readable footer includes `director`, `editor`, `pace`, `peak_shot_id`, `
 
 ---
 
+## Image-generation prompt format (v1.7+)
+
+### `<dir>/PROMPTS.md`
+
+Produced by `/filmmakers-build-keyframes`. Read by project-level render scripts (`scripts/render_keyframes.py`, `scripts/render_book_illustrations.py`) which copy in from `templates/scripts/`.
+
+Used for: book illustrations (chapter inline placement, MDX), video keyframes (image-to-video conditioning), cover concept briefs.
+
+### Required structure
+
+```markdown
+# <Source title> — Illustration Prompts
+
+<One paragraph naming what these illustrations carry. The director's editorial judgment about the source — which moments, what register, why these and not others.>
+
+---
+
+### <chapter-or-prefix>-<scene-slug>.png
+
+**Style anchor (verbatim, prepend to every prompt):**
+<style anchor block — exact text from style preset or visual-lints.md; the line must repeat verbatim across every block in the file>
+
+**Composition:** <The frame.>
+
+**Subject:** <Who/what is in the frame, with continuity locks honored.>
+
+**Light:** <The lighting register.>
+
+**Production design:** <Materials, period, props, setting.>
+
+**Negative prompt (must NOT appear):** <Forbidden elements — visual-lints.md baseline + cue-specific refusals.>
+
+**Aspect ratio:** <16:9 / 3:2 / 4:3 — director chooses per cue>
+**Format:** PNG
+
+[Optional, when --include-prose-anchors:]
+**Prose anchor:** "<50-150 char prose snippet from the source, immediately preceding this cue point — used by wire_book_illustrations.py to place the illustration in MDX>"
+
+---
+
+### <next slug>.png
+
+[same structure]
+```
+
+### Slug convention
+
+`<chapter-or-prefix>-<scene-slug>` — e.g., `ch01-hands-folding`, `ch02-compound-gate`, `kf-truck-departing`. One regex matches all in the render scripts:
+
+```
+### ([a-z0-9][a-z0-9_\-]*)\.png
+```
+
+### Style anchor handling
+
+The style anchor is the verbatim opening of every render prompt. Sources, in priority order:
+
+1. `--style-preset <slug>` argument to `/filmmakers-build-keyframes`
+2. `.great-authors/project.md`'s `## Visual` section's `Style anchor (verbatim)` field (great-authors v1.5+)
+3. `docs/style-presets.md` defaults by genre
+
+Render scripts prepend the style anchor to every shot prompt before submission. If `.great-authors/visual-lints.md` exists, render scripts also prepend the consolidated negative-prompt section to every block.
+
+---
+
+## Image-generation backends
+
+Like the four video paths (Path A through D), the image-generation backends are documented here so render scripts can target them consistently. Empirical comparison data informing this section: `~/brain/learnings/image-gen-engine-comparison-editorial-illustration-and-book-covers.md`.
+
+### Path E — gpt-image-1 (OpenAI Images API) — default
+
+The practical default for editorial-register work. Best brief adherence among non-verification-gated models.
+
+- **Model ID:** `gpt-image-1`
+- **Endpoint:** `POST https://api.openai.com/v1/images/generations`
+- **Auth:** `OPENAI_API_KEY` (Bearer)
+- **Sizes:** `1024x1024`, `1024x1536` (portrait), `1536x1024` (landscape ~3:2)
+- **Quality tiers:** `low`, `medium`, `high`
+- **Pricing:** ~$0.19/image at high quality, $0.07 at medium, $0.011 at low
+- **Prompt length:** 3,000+ chars (no hard limit observed in normal use)
+- **Content policy:** strict on real people, brand logos, sexual content; permissive on violence-adjacent imagery for narrative fiction; flagged terms produce `image_generation_user_error` rather than silent compromise
+- **Honors negative prompts:** strongly. The killer feature for stylized work with strict refusal lists.
+- **Text rendering:** competent on short, clean title typography (good enough for book covers in v1.7); not reliable for long copy or unusual typefaces
+- **Edits endpoint:** none (gpt-image-1 is generation-only)
+- **Use when:** the project has a strict visual register, a long negative-prompt list, or a style anchor that must be honored across many images
+
+### Path F — gpt-image-2 (OpenAI Images API)
+
+State-of-the-art at time of writing. **Requires organization verification on the OpenAI platform** — non-owners cannot self-verify; plan around this when picking models for a workflow.
+
+- **Model ID:** `gpt-image-2` (snapshot `gpt-image-2-2026-04-21`)
+- **Endpoint:** `POST https://api.openai.com/v1/images/generations` and `POST /v1/images/edits`
+- **Auth:** `OPENAI_API_KEY` on a verified org
+- **Sizes:** same as gpt-image-1 plus expanded options
+- **Pricing:** higher than gpt-image-1 (varies by quality tier)
+- **Edits endpoint:** present — supports image-to-image with prompt; useful for variant generation
+- **Use when:** the org is verified AND the project needs the edits endpoint OR slightly stronger brief adherence than gpt-image-1
+- **Don't use when:** org isn't verified (the API returns 401 with a verification-required error)
+
+### Path G — Imagen 4 Ultra (Gemini API)
+
+When text rendering is the load-bearing requirement.
+
+- **Model IDs:** `imagen-4.0-ultra-generate-001`, `imagen-4.0-generate-001`, `imagen-4.0-fast-generate-001`
+- **Endpoint:** `POST https://generativelanguage.googleapis.com/v1beta/models/<model-id>:predict`
+- **Auth:** `GEMINI_API_KEY` or `GOOGLE_API_KEY` via `x-goog-api-key` header
+- **Sizes:** controlled via `aspectRatio` parameter (`1:1`, `16:9`, `9:16`, `4:3`, `3:4`)
+- **Pricing:** $0.06 (Fast) to $0.04-0.08 (standard) to higher for Ultra; verify in Google Cloud console
+- **Prompt length:** 3,000+ chars handled
+- **Content policy:** **`personGeneration: allow_adult`** parameter required for any prompt featuring human subjects; without it, the API refuses
+- **Honors negative prompts:** moderate. Tends to leak forbidden elements (color through specified-monochrome scenes; secondary props the prompt didn't request).
+- **Text rendering:** the strongest of the four for rendered text within an image (titles, signs, captions)
+- **Use when:** the image must contain readable text (book covers with title typography; signage; captions in editorial illustration)
+- **Verify model availability:** call `GET /v1beta/models` first; the model ID set drifts. Do NOT assume `imagen-3.0-generate-002` or other older IDs work.
+
+### Path H — Leonardo Phoenix
+
+Avoid for editorial-register work; acceptable for tasks where the user will manually correct.
+
+- **Model ID:** Phoenix-family slugs (varies by Leonardo plan — Phoenix 1.0, Phoenix Lightning, etc.)
+- **Endpoint:** `POST https://cloud.leonardo.ai/api/rest/v1/generations`
+- **Auth:** `LEONARDO_API_KEY` Bearer
+- **Sizes:** parameterized by `width` / `height` in pixels; common book-cover sizes 832×1216 (2:3 portrait), 1024×1024
+- **Pricing:** consumes "tokens" from a Leonardo plan; varies
+- **Prompt length:** **1,500-character hard limit** — meaningfully shorter than other backends
+- **Content policy:** moderate; permissive on stylized violence
+- **Honors negative prompts:** **weak** — empirically fights negative prompts and invents content (saguaros where forbidden, color floods, frame borders, additional figures). Do not trust for stylized register with strict refusal lists.
+- **Text rendering:** poor; garbles titles routinely (observed: "MURDER ON THE / THE ARIZONA / —ARIZONA / —STRIP")
+- **Use when:** the brief is loose, the user will manually accept/reject many candidates, and the cost is lower than alternatives for the project budget
+- **Critical quirk: download User-Agent.** Leonardo's CDN returns 403 to default Python `urllib` User-Agents. Render scripts MUST set a browser User-Agent (`Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36`) on download requests, or the image generates successfully and the download fails.
+
+### Backend selection by use case
+
+| Use case | Default | Fallback |
+|---|---|---|
+| Editorial illustration with strict register | gpt-image-1 (E) | gpt-image-2 (F) if org verified |
+| Book cover with rendered title text | gpt-image-1 (E) | Imagen 4 Ultra (G) if title fidelity is critical |
+| Video keyframes for image-to-video | gpt-image-1 (E) | none — keyframes feed Kling/Runway, not the image-gen choice |
+| High-volume informal generation | Leonardo Phoenix (H) | gpt-image-1 at low quality |
+| When org verification blocks gpt-image-2 | gpt-image-1 (E) | Imagen Fast (G) for cost-sensitive work |
+
+### Render script contract
+
+Project-level render scripts (`scripts/render_keyframes.py`, `scripts/render_book_illustrations.py`) read PROMPTS.md, prepend the style anchor and visual-lints negative prompt to each block, submit per the backend's API shape, and download with the appropriate User-Agent (browser-style for Leonardo). The scripts handle:
+
+- Idempotency (skip-if-exists; `--force` regenerates; `--only <slug>` filters)
+- Pacing between submissions
+- Error surfacing with the backend's specific error code (e.g., `MOVIO_PAYMENT_INSUFFICIENT_CREDIT`, `image_generation_user_error`, `personGeneration` policy refusal)
+- Save state so re-runs skip completed items
+
+These scripts are templated in `templates/scripts/` (great-filmmakers v1.6+) and copied into projects by `/film-project-init`.
+
+---
+
 ## Format stability guarantee
 
 v0.1 and v1.0 share this footer schema. Future changes must be additive (new fields) or require a major version bump. Downstream pipelines pin against a specific footer version via the `backend` field's presence and shape.
+
+The PROMPTS.md format and image-gen backend contract introduced in v1.7 follow the same stability rule. Slug regex, block structure, and field names are stable; new fields can be added; renames or removals require a major bump.

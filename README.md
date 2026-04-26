@@ -15,6 +15,43 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
+## What's new in v1.7
+
+Codifies the keyframe-prompt brief that's been hand-written for too many projects, and documents the image-gen backend choices that any project producing illustrations will face.
+
+### `/filmmakers-build-keyframes <source-file>` — new skill
+
+Dispatches a director persona to read a prose source + the project bible, identify illustration cue points, and produce a structured `PROMPTS.md` artifact (TOC + per-prompt blocks with style anchor, composition, subject, light, production design, negative prompt). The shared upstream of book-illustration work, video-keyframe work, and cover-art briefs.
+
+Default director Hitchcock for genre fiction; `--director` overrides accept Deakins (natural-light register), Kurosawa (landscape-driven), Scorsese, Kubrick, Lynch, Spielberg. Optional flags: `--count <N>`, `--include-prose-anchors` (for downstream wiring scripts), `--out-dir <path>`, `--style-preset <slug>`.
+
+```bash
+/filmmakers-build-keyframes manuscript/chapter-01.md \
+    --director hitchcock --count 5 --include-prose-anchors
+# produces film/render/book-illustrations/PROMPTS.md
+```
+
+### `docs/output-formats.md` — image-gen backend section
+
+Four image-gen paths now documented alongside the four video paths:
+
+| Path | Backend | Use case |
+|---|---|---|
+| **E** | gpt-image-1 (OpenAI) | Default. Best brief adherence. ~$0.19/image at high quality. |
+| **F** | gpt-image-2 (OpenAI) | State-of-the-art. *Requires org verification.* Edits endpoint. |
+| **G** | Imagen 4 Ultra (Gemini) | When rendered title text is the load-bearing requirement. |
+| **H** | Leonardo Phoenix | Avoid for editorial-register; CDN requires browser User-Agent. |
+
+For each: model IDs, sizes, prompt-length limits (Phoenix is 1500-char, others 3000+), pricing, content-policy notes, known quirks. Render scripts (`templates/scripts/render_keyframes.py`) target these uniformly.
+
+### Smoke tests
+
+`tests/smoke.sh` is new for great-filmmakers (publishers and marketers had it; this plugin didn't). Validates SKILL.md and persona frontmatter, version coherence between `package.json` and `plugin.json`, style preset slug consistency in `docs/style-presets.md`, and the v1.7+ presence of `filmmakers-build-keyframes`.
+
+### Companion changes in great-authors v1.5
+
+`templates/project-bible/visual-lints.md` (new template) and the `## Visual` section in `project.md` carry the visual register and forbidden-element rules. `/filmmakers-build-keyframes` reads both. Together they eliminate per-prompt restatement of the project's visual constraints.
+
 ## What's new in v1.6
 
 Three render-script templates that turn director-authored prompts into PNGs and MP4s. The plugin now ships the bridge between the creative artifacts (PROMPTS.md, .veo3.md, .kling.md) and the rendered files on disk.
