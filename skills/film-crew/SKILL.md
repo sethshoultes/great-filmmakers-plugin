@@ -67,9 +67,19 @@ When this skill is invoked:
    Edit notes: film/edit-notes/<slug>.md
    Director: <name>. Writer: <name>. Avatar: <name>.
 
-   Next step:
-   cp film/screenplay/<slug>.heygen.md ../garagedoorscience/data/heygen-scripts/<slug>.md
-   Then run the existing HeyGen Video Agent submit step in that project.
+   Next step (v1.5+ — direct submission):
+   set -a && source ~/.config/dev-secrets/secrets.env && set +a
+   python3 <plugin-path>/scripts/heygen-submit.py film/screenplay/<slug>.heygen.md
+   # MP4 lands at film/screenplay/<slug>.mp4
+
+   Pre-flight check: HeyGen API tier credit is separate from web-app credit.
+   If the submit fails with MOVIO_PAYMENT_INSUFFICIENT_CREDIT, fund at
+   https://app.heygen.com/settings?nav=API before retrying.
+
+   Avatar IDs resolve from $HEYGEN_<NAME>_TALKING_PHOTO_ID and
+   $HEYGEN_<NAME>_VOICE_ID in canonical secrets. The avatar_name in the
+   doc's frontmatter (e.g. "Seth", "Maya") drives the resolution.
+   See docs/output-formats.md § "Avatar registry" for the full pattern.
    ```
 
    ### Veo 3 backend

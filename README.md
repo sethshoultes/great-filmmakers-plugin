@@ -15,6 +15,36 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
+## What's new in v1.5
+
+Direct HeyGen submission, an avatar registry, and Kaufman tuned for the spoken word.
+
+### `scripts/heygen-submit.py` — render from a `.heygen.md` doc in one command
+
+```bash
+set -a && source ~/.config/dev-secrets/secrets.env && set +a
+python3 scripts/heygen-submit.py film/screenplay/<slug>.heygen.md
+# MP4 lands at film/screenplay/<slug>.mp4
+```
+
+Calls HeyGen's **`POST /v3/videos`** endpoint with the `script` field — the avatar speaks Kaufman's words verbatim, no rewriting. (The `/v3/video-agents` endpoint always rewrites the prompt into its own script and is the wrong tool for tight, intentional scripts.)
+
+### Avatar registry — one frontmatter field, IDs resolved from canonical secrets
+
+```yaml
+avatar_name: Seth   # → $HEYGEN_SETH_TALKING_PHOTO_ID + $HEYGEN_SETH_VOICE_ID
+```
+
+No more pasting talking-photo IDs into docs. Add a new avatar by setting `HEYGEN_<NAME>_TALKING_PHOTO_ID` and `HEYGEN_<NAME>_VOICE_ID` in `~/.config/dev-secrets/secrets.env`. Pattern documented in `docs/output-formats.md` § Avatar registry.
+
+### Kaufman tuned for HeyGen scripts
+
+The Kaufman persona now carries explicit guidance for spoken-word drafts: read-aloud test, no clauses that need rereading, numbers must land, no filler, paths and commands stay on screen rather than in the mouth, gift goes at the end.
+
+### Pre-flight: HeyGen API tier credit
+
+The HeyGen API tier credit is **separate from web-app credits**. If submission rejects with `MOVIO_PAYMENT_INSUFFICIENT_CREDIT`, fund the API tier at https://app.heygen.com/settings?nav=API. The script surfaces this clearly when it happens.
+
 ## What's new in v1.4
 
 Two new render paths and a new image-gen tier system, derived from a head-to-head shootout between Veo 3.1 Fast preview, Kling 2.5 Turbo, and Leonardo Motion 2.0 plus a three-way image-gen comparison (Imagen 4 Fast, Leonardo Phoenix, gpt-image-2 high).

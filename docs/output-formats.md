@@ -44,6 +44,34 @@ adapter: kaufman
 
 The `director` and `adapter` fields are new for this plugin (additive; the existing pipeline's YAML parser should ignore unknown keys). Implementation must verify this assumption before shipping `/film-crew`.
 
+#### Avatar registry (v1.5)
+
+Avatar IDs (`avatar_group_id`, `talking_photo_id`, `voice_id`) are project-spanning configuration, not secrets, but they belong in the canonical secrets file at `~/.config/dev-secrets/secrets.env` so any project can submit videos without hardcoding the IDs. The convention:
+
+- Production-doc frontmatter sets `avatar_name:` (e.g. `Seth`, `Maya`, `Rick`).
+- The submit script (`scripts/heygen-submit.py`) resolves `avatar_name` to canonical secret env vars: `$HEYGEN_<NAME>_TALKING_PHOTO_ID` and `$HEYGEN_<NAME>_VOICE_ID`. The name is uppercased, dashes become underscores.
+- If the env vars aren't set, the script falls back to `talking_photo_id` and `voice_id` in the doc itself; if those are missing or `TBD`, the script errors with a clear message naming the env var to set.
+
+Example canonical secrets entries:
+
+```bash
+HEYGEN_SETH_AVATAR_GROUP_ID=e5ce268666144f26813642a37197de13
+HEYGEN_SETH_TALKING_PHOTO_ID=35da87bc92d344efb3e27960521b6788
+HEYGEN_SETH_VOICE_ID=6ce72775faf344a9b47224e4393d7b65
+```
+
+Production doc frontmatter then becomes minimal:
+
+```yaml
+avatar_name: Seth
+voice_id: TBD                    # resolved at submit time from $HEYGEN_SETH_VOICE_ID
+background: "#1C1C1A"
+target_duration_seconds: 50
+tone: confident, warm, tour-guide
+```
+
+The `voice_id: TBD` placeholder is the convention. The writer (Kaufman/Rhimes) doesn't pick the voice; the registry does.
+
 ### Body sections (fixed order)
 
 ```markdown

@@ -88,6 +88,26 @@ If `.great-authors/` exists in the current working directory:
 - The scene is populist emotion and blocking-for-feeling — **Spielberg**
 - The piece is prose with self-aware texture and footnote candidates — try `great-authors:wallace-persona`
 
+## When the deliverable is a HeyGen avatar script
+
+A HeyGen script is not the same as a film script. The constraint is: a single talking head, one voice, looking at camera. The avatar will read whatever the writer writes — but a script that reads cleanly on the page may stumble when read aloud, and the avatar will reproduce the stumble. Compose for the ear, not the page.
+
+**The read-aloud test.** Read every line aloud before finalizing. If you stumble — clauses that nest, words that collide, numbers that smear — the avatar will too. Cut to the version your tongue can deliver in one breath.
+
+**No clauses that need rereading.** *"The credentials, which had drifted across projects in ways the writer couldn't fully audit until he ran the hash test, were duplicated more than he'd thought"* — that's a clause-clogged sentence the ear cannot follow. Cut to: *"The credentials had drifted. The hash audit showed how badly."*
+
+**Numbers must land.** Specifics in spoken form land hard, but only if they're surrounded by simple grammar. *"Seventeen project files. Nine different versions of one API key. That's the duplication."* The number is the hook; the surrounding sentence has to get out of the way.
+
+**No filler.** No *basically*, no *essentially*, no *in essence*, no *at the end of the day*, no *so what I did was*. Cut every one. They are tics that read as natural in writing and as wasted seconds on the avatar's lips.
+
+**Paths and commands go on screen, not in the mouth.** The avatar can't say `~/.config/dev-secrets/secrets.env` aloud cleanly. Render that on-screen as text and have the avatar say *"the canonical file"* or *"the path is on screen — pause and copy"*. The viewer's eye absorbs the path; the avatar's voice frames it.
+
+**The gift goes at the end.** Whatever the viewer is meant to take away — a path, a command, a number — holds in the final shot for one beat longer than feels comfortable. The avatar can rest. The on-screen text holds. The viewer pauses and copies.
+
+**On-screen text constraints.** All on-screen text and lower-thirds in the bottom third of the frame. Never over the avatar's face or head. Short bold phrases or numbers — never full sentences.
+
+**Avatar registry awareness.** The HeyGen production-doc frontmatter sets `avatar_name:`. The actual `talking_photo_id` and `voice_id` resolve at submit time from canonical secrets (`$HEYGEN_<NAME>_TALKING_PHOTO_ID`, `$HEYGEN_<NAME>_VOICE_ID`). Leave `voice_id: TBD` in the doc; the registry handles it. See `docs/output-formats.md` § "Avatar registry" for the convention.
+
 ## Things you never do
 
 - You never write a script that doesn't know itself
