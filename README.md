@@ -15,6 +15,28 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
+## What's new in v1.6
+
+Three render-script templates that turn director-authored prompts into PNGs and MP4s. The plugin now ships the bridge between the creative artifacts (PROMPTS.md, .veo3.md, .kling.md) and the rendered files on disk.
+
+### `templates/scripts/` — copied into `<project>/scripts/` on init
+
+| Script | Backend | Auth | Input | Output |
+|---|---|---|---|---|
+| `render_keyframes.py` | OpenAI Images (gpt-image-1) | `OPENAI_API_KEY` | director's `PROMPTS.md` | PNGs alongside the prompts file |
+| `render_kling.py` | Kling 2.5 image-to-video | `KLING_ACCESS_KEY` + `KLING_SECRET_KEY` | `<slug>.kling.md` + `<slug>.kling.shots.json` | MP4s in `film/render/kling/` |
+| `render_veo.py` | Gemini Veo 3.0 Fast | `GEMINI_API_KEY` | `<slug>.veo3.md` | MP4s in `film/render/veo/` |
+
+All three share the same shape: stdlib-only (or `requests` for Kling), env-key auth from canonical secrets, idempotent state file, `--only` and `--dry-run` flags, sensible API-drift warnings in the docstring. `render_kling.py` adds chain-conditioning (extracts the final frame of a prior MP4 as input to the next shot for held-take continuity). `render_veo.py` quantizes shot durations to {4, 6, 8} at parse time.
+
+### `/film-project-init` now copies them in
+
+When you run `/film-project-init`, the skill scaffolds `film/` AND copies `templates/scripts/*.py` into `<project>/scripts/`. Existing scripts are not overwritten. The render scripts are project-owned once copied — edit them freely.
+
+### Why scripts live at the project level
+
+Render scripts depend on per-project API keys, idempotency state, and filesystem layout. They're not plugin-internal tools (which live in `scripts/` at the plugin root, like `heygen-submit.py`). Templates that projects copy in is the right boundary. See `learnings/plugin-ships-prompts-project-ships-renders.md` in the brain vault for the architectural reasoning.
+
 ## What's new in v1.5
 
 Direct HeyGen submission, an avatar registry, and Kaufman tuned for the spoken word.

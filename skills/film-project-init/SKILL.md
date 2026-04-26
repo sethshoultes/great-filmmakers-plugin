@@ -9,7 +9,7 @@ Scaffold the `film/` directory and register it in the project bible.
 
 ## What this does
 
-Creates a `film/` folder at the current working directory's project root with five empty subdirectories:
+Creates a `film/` folder at the current working directory's project root with five empty subdirectories, plus a `scripts/` directory at the project root with three render-script templates copied in:
 
 ```
 film/
@@ -18,7 +18,14 @@ film/
 ├── score-notes/  # Composer cue sheets with music prompt tags
 ├── storyboards/  # Production design notes with color palette, props, references
 └── edit-notes/   # Director notes + editor cut notes
+
+scripts/
+├── render_keyframes.py   # gpt-image-1 → PNG keyframes from a director PROMPTS.md
+├── render_kling.py       # Kling 2.5 image-to-video → MP4 (with chain conditioning)
+└── render_veo.py         # Veo 3.0 Fast text-to-video → MP4 (durations quantized)
 ```
+
+The render scripts are project-owned once copied — edit them freely. Re-running this skill will not overwrite an existing `scripts/` directory.
 
 Then adds a `## Film` section to `.great-authors/project.md`:
 
@@ -50,19 +57,26 @@ When this skill is invoked:
 
 4. **Create the directory tree** by copying from the plugin's `templates/film-project/`. Locate the template path by resolving `../../templates/film-project/` relative to this SKILL.md's own path.
 
-5. **Update `.great-authors/project.md`.** Read the existing file. If it already has a `## Film` section, ask whether to overwrite it. If not, append the `## Film` block documented above, substituting the user's chosen slug into `Current scene`.
+5. **Copy render-script templates.** Resolve `../../templates/scripts/` relative to this SKILL.md and copy each `*.py` file into `<project>/scripts/`. Create `scripts/` if it doesn't exist. **Do not overwrite** existing scripts in the destination — if `<project>/scripts/render_kling.py` already exists, leave it alone and report which scripts were skipped. After copying, `chmod +x` each new script so they're directly runnable.
 
-6. **Report:**
+6. **Update `.great-authors/project.md`.** Read the existing file. If it already has a `## Film` section, ask whether to overwrite it. If not, append the `## Film` block documented above, substituting the user's chosen slug into `Current scene`.
+
+7. **Report:**
    ```
    Created film/ with subdirs:
      screenplay/  shot-lists/  score-notes/  storyboards/  edit-notes/
+
+   Copied render scripts into scripts/:
+     render_keyframes.py  render_kling.py  render_veo.py
+   (skipped <list> — already present)
 
    Updated .great-authors/project.md with ## Film section.
    Current scene: <slug>
 
    Next:
-   - /filmmakers-channel <filmmaker> to channel a filmmaker, say "save as screenplay" (or "save as shot list" etc.) to save generated prose.
-   - Or wait for v1.0's /film-crew to generate a full production doc across all specialists.
+   - /film-crew <source-file> [--backend heygen|veo3|remotion] to generate a production doc.
+   - Then run scripts/render_<backend>.py to turn the prompts into PNGs and MP4s.
+     Source ~/.config/dev-secrets/secrets.env first so the API keys load.
    ```
 
 ## Notes
