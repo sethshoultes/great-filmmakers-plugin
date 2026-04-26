@@ -6,7 +6,7 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 - [`great-authors-plugin`](https://github.com/sethshoultes/great-authors-plugin) — prose craft
 - **`great-filmmakers-plugin`** (this repo) — film craft
 
-📖 **[Read the User Manual](docs/user-manual.md)** for the complete reference — install, all twelve personas, all five commands, the bible structure, backend selection, Veo 3 constraints, style presets, an end-to-end walkthrough, patterns, and troubleshooting.
+📖 **[Read the User Manual](MANUAL.md)** for the complete reference — install, all twelve personas, all five commands, the bible structure, backend selection, Veo 3 constraints, style presets, an end-to-end walkthrough, patterns, and troubleshooting.
 
 ## Install
 

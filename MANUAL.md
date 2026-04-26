@@ -3,7 +3,13 @@
 **Version:** 1.1.0
 **Audience:** developers and writers using Claude Code who want a virtual film crew sitting alongside their editor.
 
-This is the long-form reference. For a quick overview, see the [README](../README.md). For the underlying design philosophy, see the essay [Three Shapes of the Same Pattern](https://sethshoultes.com/blog/three-shapes.html).
+This is the long-form reference. For a quick overview, see the [README](README.md). For the underlying design philosophy, see the essay [Three Shapes of the Same Pattern](https://sethshoultes.com/blog/three-shapes.html).
+
+## Companion manuals in the trilogy
+
+- [Great Minds — User Manual](https://github.com/sethshoultes/great-minds-plugin/blob/main/MANUAL.md) — fourteen strategic decision-makers (Jobs, Musk, Buffett, Ive, Rubin, Huang, Winfrey, Rhimes, Blakely, Hamilton, Angelou, Sorkin, Aurelius, Jackson)
+- [Great Authors — User Manual](https://github.com/sethshoultes/great-authors-plugin/blob/main/MANUAL.md) — eleven prose craft personas (Hemingway, Didion, McCarthy, Morrison, Wallace, etc., plus Gottlieb the editor)
+- **Great Filmmakers — User Manual (this document)** — twelve film craft personas (Scorsese, Kubrick, Kurosawa, Hitchcock, Spielberg, Lynch, Rhimes, Kaufman, Deakins, Schoonmaker, Zimmer, Ferretti)
 
 ---
 
@@ -66,7 +72,7 @@ The two share the same `.great-authors/` bible at the project root. Authors writ
 
 ### Required for the Veo 3 backend
 
-If you'll use `/film-crew --backend veo3` to render multi-character cinematic scenes, you need a paid Gemini API tier (the free tier has no Veo access). Store your key at `~/.config/dev-secrets/secrets.env` as `GEMINI_API_KEY=…` and source it before any render session — see the [load-secrets skill](../../.claude/skills/load-secrets/SKILL.md) for the convention.
+If you'll use `/film-crew --backend veo3` to render multi-character cinematic scenes, you need a paid Gemini API tier (the free tier has no Veo access). Store your key at `~/.config/dev-secrets/secrets.env` as `GEMINI_API_KEY=…` and source it before any render session — see the the canonical credential-handling pattern (single source at `~/.config/dev-secrets/secrets.env`, sourced into the shell before each render session) for the convention.
 
 ---
 
@@ -724,7 +730,7 @@ These are Seth's private vault notes; if you have access, they're the most curre
 
 ### License
 
-MIT. See [LICENSE](../LICENSE) at the repo root.
+MIT. See [LICENSE](LICENSE) at the repo root.
 
 ### Reporting issues
 
