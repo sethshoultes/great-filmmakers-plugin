@@ -85,15 +85,25 @@ When this skill is invoked:
 
    **Stage 3 (parallel):** Schoonmaker (shot durations + peak shot flag) and Zimmer (audio cues embedded in shot prompts).
    - Dispatch both in one message.
-   - Schoonmaker: reads the draft SHOT LIST, assigns durations, flags the peak shot. **Durations MUST be quantized to {4, 6, 8} seconds** — the Veo 3.0 Fast API rejects 5- and 7-second shots despite its own error message claiming "between 4 and 8 inclusive." Schoonmaker's persona file covers the craft reasoning.
+   - Schoonmaker: reads the draft SHOT LIST, assigns durations, flags the peak shot. **For Path A (Veo 3.0 Fast), durations MUST be quantized to {4, 6, 8} seconds.** **For Path B (Veo 3.1 Fast preview with reference images), every shot is 8 seconds.** Schoonmaker's persona file covers the craft reasoning for both paths.
    - Zimmer: reads the draft SHOT LIST, inserts audio cues (ambient sound, dialogue pacing, music direction) into each shot prompt.
    - Both their outputs are applied as edits to `film/screenplay/<slug>.veo3.md` — not written to separate files.
 
-   **Veo 3 production constraints** (see `docs/output-formats.md` "Veo 3 production constraints" section for full detail):
-   - Default `veo_model`: `veo-3.0-fast-generate-001`. Fall back to `veo-3.0-generate-001` (4× cost) if Fast quota is exhausted.
-   - Do NOT include `personGeneration` or `referenceImages` fields in the API submission (the doc footer's `ingredient_images` block is for the Flow UI workflow only).
-   - Every shot prompt must include the full character description for every character in frame — inline anchoring is the only continuity mechanism on this tier.
-   - Prepend the active style preset paragraph (see `docs/style-presets.md`) verbatim at the start of every shot prompt.
+   **Veo 3 production constraints** (see `docs/output-formats.md` § "Veo 3 production constraints" for the full Path A vs Path B discussion):
+
+   **Path A — Veo 3.0 Fast + inline anchoring (default):**
+   - `veo_model`: `veo-3.0-fast-generate-001`. Fall back to `veo-3.0-generate-001` (4× cost) if Fast quota is exhausted.
+   - Durations quantized to {4, 6, 8}.
+   - Do NOT include `personGeneration` or `referenceImages` fields in the API submission.
+   - Every shot prompt must include the full character description for every character in frame — inline anchoring is the continuity mechanism.
+
+   **Path B — Veo 3.1 Fast preview + reference images (stronger continuity):**
+   - `veo_model`: `veo-3.1-fast-generate-preview`. Requires the upgraded Gemini API tier.
+   - All durations fixed at 8 seconds. `aspectRatio: "16:9"` mandatory.
+   - Pass up to 3 reference images per shot via `referenceImages` array using the forum-confirmed shape (flat `bytesBase64Encoded` + `mimeType`, `referenceType: "asset"` lowercase). The Google docs page shows an `inlineData` wrapper that the API rejects — don't trust it.
+   - Cannot combine `referenceImages` with `image` (init frame) or `lastFrame`.
+
+   **Both paths:** prepend the active style preset paragraph (see `docs/style-presets.md`) verbatim at the start of every shot prompt.
 
    **Stage 4 (consolidation):**
 

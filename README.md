@@ -15,6 +15,28 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
+## What's new in v1.3
+
+Reference images on Veo 3.1 actually work — v1.1's claim that they don't was wrong, and a re-test on the upgraded Gemini API tier proved the error was in the probe, not the API. v1.3 corrects the documentation, adds a second production path, and ships an honest meta-learning.
+
+**Two production paths now documented:**
+
+- **Path A — Veo 3.0 Fast + inline character anchoring** (default, cheapest, mixed durations).
+- **Path B — Veo 3.1 Fast preview + reference images** (stronger continuity, every shot 8 seconds at 16:9).
+
+**Reference-images request shape (corrected):** flat `bytesBase64Encoded` + `mimeType`, `referenceType: "asset"` lowercase. NOT the `inlineData` wrapper Google's docs page shows — the API rejects that. Forum-confirmed shape, see `docs/output-formats.md` § "Veo 3 production constraints" Path B for the full request body.
+
+**Hard constraints on reference-image renders (all required, all empirically verified):**
+1. Veo 3.1 only — Veo 3.0 rejects `referenceImages` outright.
+2. `durationSeconds: 8` — 4- and 6-second clips silently reject when refs are present.
+3. `aspectRatio: "16:9"` — other ratios reject when refs are present.
+4. Up to 3 reference images per shot.
+5. Cannot combine `referenceImages` with `image` (init frame) or `lastFrame`.
+
+**Schoonmaker's craft note** now explains both paths — Path A keeps the {4, 6, 8} cut rhythm; Path B collapses every shot to 8 seconds, trading rhythm for continuity. The trade-off is now explicit, not implicit.
+
+**Related learnings:** [`brain/learnings/veo-3-api-constraints.md`](https://github.com/sethshoultes/brain/blob/main/learnings/veo-3-api-constraints.md) carries the meta-learning ("trust the probe over the docs; vary one constraint at a time before concluding a feature is unsupported"). The v1.1 release notes that called reference images unusable were wrong; the cause was a wrong duration in the probe combined with a wrong field shape from a stale docs read.
+
 ## What's new in v1.1
 
 Production-grade fixes from the first real-world Veo 3 short ([Three Shapes of the Same Pattern](https://sethshoultes.com/blog/three-shapes.html)):

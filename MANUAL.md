@@ -380,41 +380,75 @@ Programmatic composition: narration over a sequence of slides. Custom photos, br
 
 ## 9. Veo 3 production constraints
 
-The Gemini API tier has hard rules that the v1.1 plugin defaults honor. If you're rendering directly via the API (rather than the Veo Flow UI), you need to know them.
+The Gemini API tier has hard rules. There are now **two paths** depending on which Veo model you target:
 
-### Quantized shot durations
+### Path A — Veo 3.0 Fast + inline anchoring (default, cheapest)
 
-Veo 3.0 Fast accepts only **4, 6, or 8 seconds per shot** — even though the error message claims *"between 4 and 8, inclusive."* Five-second clips get rejected. Seven-second clips probably do too.
+Best for: dialogue-heavy or pacing-heavy work where mixed cut lengths matter.
 
-Schoonmaker's persona file teaches this constraint as part of the cutting craft:
-
-> *"This is not a compromise. Constraint is the editor's friend. The four-second insert and the six-second hold are the rhythm now. The work is to choose which beats earn six and which earn four — and to leave the eight-second shot for the moment that needs the room."*
-
-When `/film-crew --backend veo3` produces a SHOT LIST, durations are already quantized to {4, 6, 8}. If you write a SHOT LIST manually, do the same.
-
-### Don't pass `personGeneration` or `referenceImages`
-
-Both parameters are rejected on the standard Gemini API tier:
-
-- `personGeneration` (any value) — rejected on `veo-3.0-fast-generate-001`. Stylized/animated humans render fine without it; photorealistic humans get content-gated separately.
-- `referenceImages` — rejected with *"isn't supported by this model"* on Fast and *"Your use case is currently not supported"* on Veo 3.1 preview. **No character continuity via reference images on this tier — only via Vertex AI.**
-
-The plugin's machine-readable footer keeps an `ingredient_images:` block for the Veo Flow UI workflow, but the API submission does not include either parameter.
-
-### Inline character anchoring is the continuity mechanism
-
-Since reference images don't work, the only reliable way to keep a character looking the same across cuts is to repeat the full character description verbatim in every shot prompt where the character appears.
-
-Example:
+- **Model:** `veo-3.0-fast-generate-001` ($0.10/sec at 720p).
+- **Shot durations are quantized to {4, 6, 8} seconds.** Five and seven get rejected despite the error message claiming "between 4 and 8 inclusive." Schoonmaker's persona teaches this:
+  > *"The four-second insert and the six-second hold are the rhythm now. The work is to choose which beats earn six and which earn four — and to leave the eight-second shot for the moment that needs the room."*
+- **No `personGeneration`** on tier 1 (rejected; on the upgraded tier it's accepted but optional).
+- **No `referenceImages`** on Veo 3.0 — explicitly rejected with *"isn't supported by this model."*
+- **Continuity mechanism:** inline character anchoring. Repeat the full character description verbatim in every shot prompt where the character appears:
 
 ```
 WRITER (WR): a man in his mid-forties drawn in pen-and-ink with crosshatch
 shading, wire-rim glasses, salt-and-pepper hair, worn gray henley sweater
 ```
 
-Drop that exact phrase into every shot prompt the writer is in. Veo holds the rendering close enough across cuts that the character feels continuous.
+Drop that phrase into every shot the writer is in. Veo holds the rendering close enough across cuts. Token budget is generous — verified at 480 input tokens per shot prompt.
 
-The token budget is generous — verified at 480 input tokens per shot prompt.
+### Path B — Veo 3.1 Fast preview + reference images (stronger continuity)
+
+Best for: multi-character scenes where face/character continuity is the dominant editorial concern. Available on the upgraded Gemini API tier.
+
+- **Model:** `veo-3.1-fast-generate-preview`.
+- **All shot durations fixed at 8 seconds.** This is a hard constraint: 4- and 6-second clips silently reject when reference images are present. Schoonmaker's "round to {4, 6, 8}" rule collapses to "every shot is 8."
+- **`aspectRatio: "16:9"` mandatory.** Other ratios reject when reference images are present.
+- **Up to 3 reference images per shot.** Generate them via Imagen 4 Fast (~$0.02/image) and pass them via the `referenceImages` array.
+- **Cannot combine reference images with `image` (init frame) or `lastFrame`.** Pick one continuity mechanism per shot.
+- **Request shape (forum-confirmed; the docs page on `ai.google.dev/gemini-api/docs/video` shows an `inlineData` wrapper that the API rejects — don't trust it):**
+
+```json
+{
+  "instances": [{
+    "prompt": "...",
+    "referenceImages": [
+      {
+        "referenceType": "asset",
+        "image": {
+          "bytesBase64Encoded": "<base64>",
+          "mimeType": "image/jpeg"
+        }
+      }
+    ]
+  }],
+  "parameters": {
+    "aspectRatio": "16:9",
+    "resolution": "720p",
+    "durationSeconds": 8,
+    "sampleCount": 1
+  }
+}
+```
+
+Notes:
+- `referenceType` is `"asset"` lowercase. `"ASSET"` rejects.
+- The `image` object uses **flat** `bytesBase64Encoded` + `mimeType`, NOT the `inlineData: {mimeType, data}` wrapper Google's docs page shows. Trust the API behavior over the docs page on this field.
+
+### Choosing between A and B
+
+| Question | Path |
+|----------|------|
+| Need mixed durations (4s, 6s, 8s) for cut rhythm? | A — every shot in B is 8 seconds |
+| Need stronger character continuity than verbatim text repetition? | B |
+| Cost-sensitive? | A — Veo 3.0 Fast is the cheapest working model |
+| Multi-character scene, strict face/look continuity? | B — up to 3 reference images per shot |
+| Aspect ratio other than 16:9? | A — B is locked to 16:9 with refs |
+
+The default is A. Switch to B only when continuity demands outweigh rhythm flexibility.
 
 ### Default model
 
@@ -608,17 +642,25 @@ The plugin's v1.1 defaults round to {4, 6, 8}. If you see 5- or 7-second values,
 
 ### Veo returns "Your use case is currently not supported"
 
-You're submitting to a Veo 3.1 preview model on a tier that doesn't allow human subjects there. Two fixes:
+This error has two distinct causes — figure out which one you're hitting:
 
-1. Switch to `veo-3.0-fast-generate-001` (the v1.1 default).
-2. Upgrade to a higher Gemini API tier; 3.1 previews then accept human subjects.
+1. **You're on Gemini API tier 1 and submitting human subjects to a Veo 3.1 preview model.** Tier 1 doesn't allow human subjects on 3.1. Either switch to `veo-3.0-fast-generate-001` (Path A default) or upgrade your Gemini API tier.
+2. **You're submitting `referenceImages` to a Veo 3.1 preview model with the wrong shape or wrong constraints.** Reference images work on Veo 3.1 but require:
+   - `durationSeconds: 8` (4 and 6 silently reject)
+   - `aspectRatio: "16:9"` (other ratios reject)
+   - Flat `bytesBase64Encoded` + `mimeType` shape, NOT `inlineData` wrapper
+   - `referenceType: "asset"` lowercase
+   - No `image` (init frame) or `lastFrame` in the same request
+
+   See Section 9 Path B for the full working request shape.
 
 ### Veo returns "referenceImages isn't supported by this model"
 
-The Gemini API tier doesn't accept reference images on `veo-3.0-fast-generate-001`. Two paths:
+You're submitting reference images to a Veo 3.0 model. They're not supported there. Three options:
 
-1. Use **inline character anchoring** — repeat the full character description verbatim in every shot prompt. This is the v1.1 plugin's continuity mechanism.
-2. Use the Veo Flow UI workflow (the dashboard at `~/Local Sites/veo-builder/`), which does accept reference images. The plugin's `ingredient_images:` block in the doc footer is for this path.
+1. **Switch the model to `veo-3.1-fast-generate-preview`.** Reference images work there with constraints (every shot 8 seconds, aspectRatio 16:9 mandatory). See Section 9 Path B for the full request shape.
+2. **Stay on Veo 3.0 Fast and use inline character anchoring** — repeat the full character description verbatim in every shot prompt. Cheaper and gives you mixed durations in {4, 6, 8}. This is Path A.
+3. **Use the Veo Flow UI workflow** at `~/Local Sites/veo-builder/`, which does accept reference images directly. The plugin's `ingredient_images:` block in the doc footer feeds this path.
 
 ### Veo returns 429 "RESOURCE_EXHAUSTED"
 

@@ -175,11 +175,51 @@ ingredient_images:
 
 These are real, empirically-verified API constraints. Production docs that violate them get rejected at submit time — Schoonmaker, the writer, and `/film-crew` MUST honor all of them.
 
-- **Default model:** `veo-3.0-fast-generate-001` ($0.10/sec at 720p). Standard `veo-3.0-generate-001` is the fallback when Fast hits its daily quota — same content gates, ~4× the cost. Avoid Veo 3.1 preview models on this tier; they reject all human subjects.
+**Two paths, pick per project:**
+
+#### Path A — Veo 3.0 Fast + inline character anchoring (default, cheapest)
+
+- **Model:** `veo-3.0-fast-generate-001` ($0.10/sec at 720p). Standard `veo-3.0-generate-001` is the fallback when Fast hits its daily quota — same content gates, ~4× the cost.
 - **Shot durations are quantized to {4, 6, 8} seconds.** The error message says "between 4 and 8 inclusive" but 5- and 7-second shots get rejected. Schoonmaker's cut rhythm must round to one of {4, 6, 8}.
-- **Do NOT pass `personGeneration`** — every value (`allow_all`, `allow_adult`, `dont_allow`) is rejected on this tier. Stylized/animated humans render fine without it; photorealistic humans get content-gated separately.
-- **Do NOT pass `referenceImages` to the API.** Not supported on `veo-3.0-fast-generate-001`; Veo 3.1 preview accepts the field but rejects the submission anyway. The `ingredient_images` block in the footer is for the Veo Flow UI workflow only — direct-API renders rely on inline character anchoring instead (full character description repeated verbatim in every shot the character appears in).
-- **Pacing:** 45–60s between submits to avoid per-minute 429s. Daily/rolling-24h quota tops out around 10–15 calls on tier 1.
+- **Do NOT pass `personGeneration`** on tier 1 — every value is rejected. On the upgraded tier it's accepted but optional. Stylized/animated humans render fine without it.
+- **Do NOT pass `referenceImages`** to Veo 3.0 — explicitly rejected with *"referenceImages isn't supported by this model."* Use inline character anchoring instead: full character description repeated verbatim in every shot the character appears in.
+- **Pacing:** 45–60s between submits to avoid per-minute 429s.
+
+#### Path B — Veo 3.1 Fast preview + reference images (stronger continuity)
+
+Available on the upgraded Gemini API tier. Use when character continuity matters more than mixed cut rhythm.
+
+- **Model:** `veo-3.1-fast-generate-preview`.
+- **Shot durations:** ALL shots must be `durationSeconds: 8`. 4- and 6-second clips silently reject when reference images are present. Schoonmaker's "round to {4, 6, 8}" rule collapses to "every shot is 8."
+- **Aspect ratio:** `aspectRatio: "16:9"` mandatory. Other ratios reject when reference images are present.
+- **Up to 3 reference images per shot.** Pass via the `referenceImages` array.
+- **Cannot combine `referenceImages` with `image` (init frame) or `lastFrame`.** Pick one continuity mechanism per shot.
+- **Request shape (forum-confirmed; the docs page on `ai.google.dev/gemini-api/docs/video` shows an `inlineData` wrapper that the API rejects — don't trust it):**
+
+```json
+{
+  "instances": [{
+    "prompt": "<style anchor + scene + action>",
+    "referenceImages": [
+      {
+        "referenceType": "asset",
+        "image": {
+          "bytesBase64Encoded": "<base64>",
+          "mimeType": "image/jpeg"
+        }
+      }
+    ]
+  }],
+  "parameters": {
+    "aspectRatio": "16:9",
+    "resolution": "720p",
+    "durationSeconds": 8,
+    "sampleCount": 1
+  }
+}
+```
+
+The `ingredient_images` block in the production-doc footer feeds Path B directly when a writer chooses reference images. It also continues to support the Veo Flow UI workflow.
 
 ### Which persona fills which section
 
@@ -187,8 +227,8 @@ These are real, empirically-verified API constraints. Production docs that viola
 - **LOCATIONS:** Ferretti
 - **VISUAL GRAMMAR:** Deakins (camera + lens + movement vocabulary)
 - **NEGATIVE PROMPT:** Ferretti + director (things that violate director's non-negotiables)
-- **SHOT LIST prompts:** director + writer using VISUAL GRAMMAR terms, with Deakins consulting on camera, Ferretti on set/prop detail, Zimmer's audio cues embedded. Each shot prompt MUST include the full character description for every character in frame — Veo cannot use reference images on this tier, so inline anchoring is the continuity mechanism.
-- **Durations:** Schoonmaker (cut rhythm determines shot length, **rounded to {4, 6, 8}**)
+- **SHOT LIST prompts:** director + writer using VISUAL GRAMMAR terms, with Deakins consulting on camera, Ferretti on set/prop detail, Zimmer's audio cues embedded. For Path A (Veo 3.0), each shot prompt MUST include the full character description for every character in frame — inline anchoring is the continuity mechanism. For Path B (Veo 3.1 with refs), the prompt may reference characters more loosely ("the man depicted in the first reference image") since the refs do the continuity work.
+- **Durations:** Schoonmaker (cut rhythm determines shot length, **rounded to {4, 6, 8}** for Path A, **fixed at 8** for Path B)
 - **Style anchor:** A style preset paragraph is prepended verbatim to every shot prompt. See `docs/style-presets.md` (pen-and-ink editorial is the v1.1 default; future presets: noir, photoreal, Ghibli)
 
 ---
