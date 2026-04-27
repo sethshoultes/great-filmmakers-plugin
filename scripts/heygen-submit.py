@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Submit a HeyGen production doc to HeyGen v2 REST API.
 
-Reads a `.heygen.md` production doc (the great-filmmakers `/film-crew --backend heygen`
+Reads a `.heygen.md` production doc (the great-filmmakers `/filmmakers-crew --backend heygen`
 output format), extracts the spoken script, resolves avatar/voice IDs from canonical
 secrets, submits to HeyGen, polls for completion, and downloads the MP4.
 

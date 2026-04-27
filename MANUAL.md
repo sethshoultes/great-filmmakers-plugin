@@ -58,7 +58,7 @@ All three share a single pattern: **persona + bible + save triggers + fan-out + 
 /plugin install great-filmmakers@sethshoultes
 ```
 
-That's it. The plugin's commands (`/film-project-init`, `/filmmakers-channel`, `/filmmakers-edit`, `/filmmakers-critique`, `/filmmakers-debate`, `/film-crew`) become available in your next Claude Code session.
+That's it. The plugin's commands (`/filmmakers-project-init`, `/filmmakers-channel`, `/filmmakers-edit`, `/filmmakers-critique`, `/filmmakers-debate`, `/filmmakers-crew`) become available in your next Claude Code session.
 
 ### Companion plugins
 
@@ -72,7 +72,7 @@ The two share the same `.great-authors/` bible at the project root. Authors writ
 
 ### Required for the Veo 3 backend
 
-If you'll use `/film-crew --backend veo3` to render multi-character cinematic scenes, you need a paid Gemini API tier (the free tier has no Veo access). Store your key at `~/.config/dev-secrets/secrets.env` as `GEMINI_API_KEY=…` and source it before any render session — see the the canonical credential-handling pattern (single source at `~/.config/dev-secrets/secrets.env`, sourced into the shell before each render session) for the convention.
+If you'll use `/filmmakers-crew --backend veo3` to render multi-character cinematic scenes, you need a paid Gemini API tier (the free tier has no Veo access). Store your key at `~/.config/dev-secrets/secrets.env` as `GEMINI_API_KEY=…` and source it before any render session — see the the canonical credential-handling pattern (single source at `~/.config/dev-secrets/secrets.env`, sourced into the shell before each render session) for the convention.
 
 ---
 
@@ -114,7 +114,7 @@ In a fresh project directory:
 
 ```
 /authors-project-init      # creates .great-authors/
-/film-project-init         # creates film/ and registers it in .great-authors/project.md
+/filmmakers-project-init         # creates film/ and registers it in .great-authors/project.md
 ```
 
 The first command (from great-authors) scaffolds the shared bible. The second adds a `film/` directory at the project root with five empty subdirectories (screenplay, shot-lists, score-notes, storyboards, edit-notes) and a `## Film` section in `project.md` that names your starting scene.
@@ -179,7 +179,7 @@ Writers adapt source prose into the chosen backend's input format. They don't dr
 | Charlie Kaufman | `/filmmakers-channel kaufman` | Structural invention, interiority, puzzle-box logic | Adapting essays, internal-monologue source material, structural risk |
 | Shonda Rhimes | `/filmmakers-channel rhimes` | Scene architecture, serial momentum, crackling dialogue | Adapting narrative prose, multi-character scenes, episodic sequencing |
 
-Kaufman is the default writer for `/film-crew`. If `--avatar sara` is selected for HeyGen, Rhimes is auto-assigned because her scrappy serialized voice matches Sara's avatar register.
+Kaufman is the default writer for `/filmmakers-crew`. If `--avatar sara` is selected for HeyGen, Rhimes is auto-assigned because her scrappy serialized voice matches Sara's avatar register.
 
 ### Craft specialists (4)
 
@@ -212,12 +212,12 @@ The new persona replaces the previous one in the active conversation.
 
 The plugin ships five orchestration commands. Three coordinate voices in real time; two write artifacts to disk.
 
-### `/film-project-init`
+### `/filmmakers-project-init`
 
 Scaffolds the `film/` directory at the project root and adds a `## Film` section to `.great-authors/project.md` that names your current scene. Run once per project, after `/authors-project-init`.
 
 ```
-/film-project-init
+/filmmakers-project-init
 ```
 
 The command will ask one question — *"What's the slug for the scene you're starting with?"* — and accept any kebab-case identifier. Default: `scene-01`.
@@ -272,14 +272,14 @@ Two personas argue a craft question. Useful when the answer depends on values th
 
 The two personas trade three exchanges, then a third persona (Schoonmaker by default) summarizes the disagreement and proposes a synthesis. Use this when the debate itself is the value — for one-sided answers, channel a single persona instead.
 
-### `/film-crew`
+### `/filmmakers-crew`
 
 End-to-end pipeline. Takes a source file and a backend flag, dispatches the full crew, writes the production-ready artifact.
 
 ```
-/film-crew manuscript/diner-scene.md --backend veo3
-/film-crew blog/garage-door-opener-lifespan.mdx --backend heygen --avatar maya
-/film-crew inspection/door-walkaround.md --backend remotion
+/filmmakers-crew manuscript/diner-scene.md --backend veo3
+/filmmakers-crew blog/garage-door-opener-lifespan.mdx --backend heygen --avatar maya
+/filmmakers-crew inspection/door-walkaround.md --backend remotion
 ```
 
 This is the command you use when you've done the writing and now want a video. The chosen backend determines which personas contribute and what artifact lands on disk. Section 8 explains backend selection in detail.
@@ -322,7 +322,7 @@ If you skip the bible, your dispatched personas will produce off-voice output �
 
 ```
 /authors-project-init       # from great-authors-plugin
-/film-project-init          # from great-filmmakers-plugin
+/filmmakers-project-init          # from great-filmmakers-plugin
 ```
 
 The second command is idempotent — if `film/` already exists, it asks before overwriting.
@@ -331,7 +331,7 @@ The second command is idempotent — if `film/` already exists, it asks before o
 
 ## 8. Choosing a backend
 
-`/film-crew` produces a production-ready artifact for one of three rendering tools. Each fits a different shape of work.
+`/filmmakers-crew` produces a production-ready artifact for one of three rendering tools. Each fits a different shape of work.
 
 ### `--backend heygen` — single-avatar talking-head
 
@@ -374,7 +374,7 @@ Programmatic composition: narration over a sequence of slides. Custom photos, br
 
 ### When you don't pass `--backend`
 
-`/film-crew` will auto-select based on classification signals in the source — educational/maintenance/cost/safety prose → HeyGen; narrative/dialogue-heavy → Veo 3; inspection-style → Remotion. If the source is ambiguous, the command asks rather than guesses.
+`/filmmakers-crew` will auto-select based on classification signals in the source — educational/maintenance/cost/safety prose → HeyGen; narrative/dialogue-heavy → Veo 3; inspection-style → Remotion. If the source is ambiguous, the command asks rather than guesses.
 
 ---
 
@@ -570,7 +570,7 @@ This is the path that produced [Three Shapes of the Same Pattern](https://sethsh
 ```
 mkdir trilogy-blog-post && cd trilogy-blog-post
 /authors-project-init
-/film-project-init
+/filmmakers-project-init
 ```
 
 Edit `.great-authors/project.md` to set premise, voice, and characters. Edit `.great-authors/voice.md` to lock the voice rules.
@@ -592,7 +592,7 @@ The prose lands in `manuscript/trilogy.md`.
 ### Step 2 — Run the film crew
 
 ```
-/film-crew manuscript/trilogy.md --backend veo3
+/filmmakers-crew manuscript/trilogy.md --backend veo3
 ```
 
 This dispatches the full crew. The pipeline:
@@ -656,13 +656,13 @@ Self-hosted on GitHub Pages, no third-party embed. See the [Publish Blog Post wi
 
 When you're working in a project that uses persona plugins, your role is to **dispatch**, not to **impersonate**. If you find yourself about to write *"Scorsese would say…"* — stop. Run `/filmmakers-channel scorsese` and let the persona file do the work.
 
-The `templates/film-project/CLAUDE.md` that `/film-project-init` drops at the project root sets this expectation explicitly. When in doubt, read it.
+The `templates/film-project/CLAUDE.md` that `/filmmakers-project-init` drops at the project root sets this expectation explicitly. When in doubt, read it.
 
 The full essay is at [orchestrator-not-channel](https://github.com/sethshoultes/brain/blob/main/learnings/orchestrator-not-channel.md). The short version: inline impersonation collapses each voice into Claude's default register and erases the reason the personas exist.
 
 ### Read the bible before dispatching
 
-If you skip the bible, your dispatched personas produce off-voice output. Always run `/authors-project-init` and `/film-project-init` before the first `/film-crew` invocation. Edit `project.md` and `voice.md` even if briefly.
+If you skip the bible, your dispatched personas produce off-voice output. Always run `/authors-project-init` and `/filmmakers-project-init` before the first `/filmmakers-crew` invocation. Edit `project.md` and `voice.md` even if briefly.
 
 ### Leave silence for the visual punch
 
@@ -670,7 +670,7 @@ For Veo 3 shorts with narration, time the VO to about 80% of the video length. T
 
 ### One bundled commit per artifact, not per file
 
-When `/film-crew --backend veo3` writes a production doc, it touches one file. Commit that as a unit. Don't split the CAST commit from the SHOT LIST commit — the artifact is the whole document.
+When `/filmmakers-crew --backend veo3` writes a production doc, it touches one file. Commit that as a unit. Don't split the CAST commit from the SHOT LIST commit — the artifact is the whole document.
 
 ### Don't try to channel multiple personas inline
 
@@ -683,7 +683,7 @@ If you need multiple voices, use `/filmmakers-edit`, `/filmmakers-critique`, or 
 | Quick triage from many voices | `/filmmakers-critique` | <30s | 3 bullets per persona |
 | Deep markup from many voices | `/filmmakers-edit` | 1–3 min | Inline annotations + paragraph |
 | One voice, real conversation | `/filmmakers-channel` | as long as needed | Conversation + saved files |
-| One voice, end-to-end | `/film-crew` | 1–5 min | Production-ready artifact |
+| One voice, end-to-end | `/filmmakers-crew` | 1–5 min | Production-ready artifact |
 | Argument between two voices | `/filmmakers-debate` | 1–2 min | Three exchanges + synthesis |
 
 ### The bible is shared but film and manuscript are not
@@ -694,7 +694,7 @@ If you need multiple voices, use `/filmmakers-edit`, `/filmmakers-critique`, or 
 
 ## 13. Troubleshooting
 
-### `/film-crew --backend veo3` produces 5- or 7-second shots
+### `/filmmakers-crew --backend veo3` produces 5- or 7-second shots
 
 The plugin's v1.1 defaults round to {4, 6, 8}. If you see 5- or 7-second values, you're either on v1.0 (upgrade) or you've hand-edited the doc. Round up or down to the nearest valid duration before submitting to Veo.
 
@@ -730,11 +730,11 @@ You've hit the daily/rolling-24h quota. Three options:
 
 ### A persona's output sounds generic / not like them
 
-You probably didn't read the bible. Run `/authors-project-init` and `/film-project-init`, edit `project.md` and `voice.md`, and re-channel. Personas without bible context fall back to Claude's default register.
+You probably didn't read the bible. Run `/authors-project-init` and `/filmmakers-project-init`, edit `project.md` and `voice.md`, and re-channel. Personas without bible context fall back to Claude's default register.
 
-### `/film-crew` says "no `.great-authors/` found"
+### `/filmmakers-crew` says "no `.great-authors/` found"
 
-Run `/authors-project-init` from `great-authors-plugin` first. The bible has to exist before `/film-project-init` can scaffold `film/`.
+Run `/authors-project-init` from `great-authors-plugin` first. The bible has to exist before `/filmmakers-project-init` can scaffold `film/`.
 
 ### Save trigger doesn't write to disk
 
@@ -758,7 +758,7 @@ Check that the character description is in **every** shot prompt — not just th
 
 ### Can I run great-filmmakers without great-authors?
 
-Technically yes — the plugin doesn't import great-authors as a dependency. Practically no — `/film-project-init` assumes a `.great-authors/` bible exists, and personas read from it. Run great-authors first; it's free and complementary.
+Technically yes — the plugin doesn't import great-authors as a dependency. Practically no — `/filmmakers-project-init` assumes a `.great-authors/` bible exists, and personas read from it. Run great-authors first; it's free and complementary.
 
 ### Do I have to use the Veo backend?
 
@@ -780,9 +780,9 @@ Claude Code is currently Anthropic-only. The plugin's persona files are markdown
 
 Default to Fast ($0.10/sec at 720p). Quantize all shots to {4, 6, 8} — no waste. For a 50-second short on Fast that's $5.00. Rendering on Standard quadruples the cost; only fall back when Fast hits daily quota and you can't wait.
 
-### What happens if I hand-edit a `.veo3.md` production doc after `/film-crew` writes it?
+### What happens if I hand-edit a `.veo3.md` production doc after `/filmmakers-crew` writes it?
 
-Nothing breaks — the file is plain markdown. `/film-crew` won't overwrite without asking. Hand-editing is the expected workflow for fine-tuning before render.
+Nothing breaks — the file is plain markdown. `/filmmakers-crew` won't overwrite without asking. Hand-editing is the expected workflow for fine-tuning before render.
 
 ### How do I rotate keys exposed in chat?
 
@@ -797,13 +797,13 @@ Visit each provider's dashboard, generate a new key, update only `~/.config/dev-
 | Path | Purpose |
 |------|---------|
 | `agents/<name>-persona.md` | Twelve persona files |
-| `skills/film-project-init/SKILL.md` | `/film-project-init` |
+| `skills/filmmakers-project-init/SKILL.md` | `/filmmakers-project-init` |
 | `skills/filmmakers-channel/SKILL.md` | `/filmmakers-channel <name>` |
 | `skills/filmmakers-edit/SKILL.md` | `/filmmakers-edit <names> <file>` |
 | `skills/filmmakers-critique/SKILL.md` | `/filmmakers-critique <names> <file>` |
 | `skills/filmmakers-debate/SKILL.md` | `/filmmakers-debate <a> <b> <topic>` |
-| `skills/film-crew/SKILL.md` | `/film-crew <source> --backend …` |
-| `templates/film-project/CLAUDE.md` | Dropped at project root by `/film-project-init` |
+| `skills/filmmakers-crew/SKILL.md` | `/filmmakers-crew <source> --backend …` |
+| `templates/film-project/CLAUDE.md` | Dropped at project root by `/filmmakers-project-init` |
 | `docs/output-formats.md` | Format specs for HeyGen / Veo 3 / Remotion artifacts |
 | `docs/style-presets.md` | Style preset library |
 | `docs/profiles.md` | Persona profile mapping (design-time reference) |

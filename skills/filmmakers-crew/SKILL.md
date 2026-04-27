@@ -1,9 +1,9 @@
 ---
-name: film-crew
-description: The backend-aware pipeline command. Turns a source file (blog post, manuscript chapter, scene notes) into a complete film treatment across the appropriate specialists for a chosen video backend. Usage - /film-crew <source-file> [--backend heygen|veo3|remotion] [--director <name>] [--writer <name>] [--avatar <name>]. HeyGen backend produces a single-avatar script; Veo 3 backend produces a multi-character production doc with CAST, VISUAL GRAMMAR, SHOT LIST; Remotion backend produces a slideshow-compatible script. Auto-selects backend from source classification if omitted.
+name: filmmakers-crew
+description: The backend-aware pipeline command. Turns a source file (blog post, manuscript chapter, scene notes) into a complete film treatment across the appropriate specialists for a chosen video backend. Usage - /filmmakers-crew <source-file> [--backend heygen|veo3|remotion] [--director <name>] [--writer <name>] [--avatar <name>]. HeyGen backend produces a single-avatar script; Veo 3 backend produces a multi-character production doc with CAST, VISUAL GRAMMAR, SHOT LIST; Remotion backend produces a slideshow-compatible script. Auto-selects backend from source classification if omitted.
 ---
 
-# /film-crew <source-file> [options]
+# /filmmakers-crew <source-file> [options]
 
 The film treatment pipeline. Source prose → backend-ready artifacts in `film/`.
 
@@ -28,7 +28,7 @@ When this skill is invoked:
    - `--voice-id <id>` (HeyGen only) — override the HeyGen voice ID.
    - `--scene <slug>` (optional) — override the slug. Defaults to the source file's basename.
 
-2. **Verify the file exists** and `.great-authors/` is present in its parent directory tree. If no bible, tell the user: "The /film-crew command works best with a project bible. Run `/authors-project-init` (from great-authors-plugin) and `/film-project-init` first." Proceed anyway if the user confirms.
+2. **Verify the file exists** and `.great-authors/` is present in its parent directory tree. If no bible, tell the user: "The /filmmakers-crew command works best with a project bible. Run `/authors-project-init` (from great-authors-plugin) and `/filmmakers-project-init` first." Proceed anyway if the user confirms.
 
 3. **Resolve the backend:**
    - If `--backend` is passed, use it.
@@ -140,7 +140,7 @@ When this skill is invoked:
 
    **Stage 3 (consolidation):** report the output path and suggest copying it into the `garagedoorscience/remotion/scripts/` pipeline.
 
-6. **Machine-readable footer.** Every artifact produced by `/film-crew` MUST end with the machine-readable footer specified in `docs/output-formats.md`. This is the stable contract for downstream pipelines.
+6. **Machine-readable footer.** Every artifact produced by `/filmmakers-crew` MUST end with the machine-readable footer specified in `docs/output-formats.md`. This is the stable contract for downstream pipelines.
 
 ## Shared notes
 

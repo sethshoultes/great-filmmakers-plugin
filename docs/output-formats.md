@@ -1,6 +1,6 @@
 # Great Filmmakers — Output Format Specifications
 
-Strict format specs for the three primary artifact types the `/film-crew` command (v1.0) will produce. Downstream pipelines consume these artifacts directly; changes require a major version bump or additive-only edits.
+Strict format specs for the three primary artifact types the `/filmmakers-crew` command (v1.0) will produce. Downstream pipelines consume these artifacts directly; changes require a major version bump or additive-only edits.
 
 ## Overview
 
@@ -42,7 +42,7 @@ adapter: kaufman
 ---
 ```
 
-The `director` and `adapter` fields are new for this plugin (additive; the existing pipeline's YAML parser should ignore unknown keys). Implementation must verify this assumption before shipping `/film-crew`.
+The `director` and `adapter` fields are new for this plugin (additive; the existing pipeline's YAML parser should ignore unknown keys). Implementation must verify this assumption before shipping `/filmmakers-crew`.
 
 #### Avatar registry (v1.5)
 
@@ -201,7 +201,7 @@ ingredient_images:
 
 ### Veo 3 production constraints (Gemini API mldev tier)
 
-These are real, empirically-verified API constraints. Production docs that violate them get rejected at submit time — Schoonmaker, the writer, and `/film-crew` MUST honor all of them.
+These are real, empirically-verified API constraints. Production docs that violate them get rejected at submit time — Schoonmaker, the writer, and `/filmmakers-crew` MUST honor all of them.
 
 **Two paths, pick per project:**
 
@@ -525,7 +525,7 @@ Project-level render scripts (`scripts/render_keyframes.py` for image generation
 - Error surfacing with the backend's specific error code (e.g., `MOVIO_PAYMENT_INSUFFICIENT_CREDIT`, `image_generation_user_error`, `personGeneration` policy refusal)
 - Save state so re-runs skip completed items
 
-These scripts are templated in `templates/scripts/` (great-filmmakers v1.6+) and copied into projects by `/film-project-init`.
+These scripts are templated in `templates/scripts/` (great-filmmakers v1.6+) and copied into projects by `/filmmakers-project-init`.
 
 ---
 

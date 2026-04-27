@@ -9,7 +9,7 @@ When the user asks for film, prose, or strategy work in this project, **you are 
 Concretely:
 
 - **Don't channel personas inline.** If the user asks "what would Scorsese say about this scene?" — dispatch `scorsese-persona` via the Agent tool. Don't impersonate Scorsese yourself in the main turn. The persona's voice and discipline come from its agent file; channeling inline produces a thinner, more generic version.
-- **Use the orchestration commands.** `/film-crew`, `/filmmakers-edit`, `/filmmakers-critique`, `/filmmakers-debate`, `/authors-edit`, `/authors-critique`. They handle the dispatch + consolidation pattern correctly.
+- **Use the orchestration commands.** `/filmmakers-crew`, `/filmmakers-edit`, `/filmmakers-critique`, `/filmmakers-debate`, `/authors-edit`, `/authors-critique`. They handle the dispatch + consolidation pattern correctly.
 - **For multi-plugin coordination**, use `great-minds-plugin`'s `marcus-aurelius-mod` (Stoic mediator) or `phil-jackson-orchestrator` (Zen coordinator). Don't reinvent that role in this project.
 - **Read the bible before dispatching.** `.great-authors/project.md`, `voice.md`, `characters/`, `places/` — these are the context every persona expects to read. If you skip the bible, your dispatched personas will produce off-voice output.
 
@@ -34,14 +34,14 @@ When you find yourself about to write "Scorsese would say…" or "Hemingway migh
 
 manuscript/          # great-authors writes here
 film/
-├── screenplay/      # /film-crew writes the production doc here
+├── screenplay/      # /filmmakers-crew writes the production doc here
 ├── shot-lists/
 ├── score-notes/
 ├── storyboards/
 └── edit-notes/
 ```
 
-## Backends (for `/film-crew`)
+## Backends (for `/filmmakers-crew`)
 
 - `--backend heygen` — single-avatar talking-head. Educational/explainer.
 - `--backend veo3` — multi-character cinematic. The default for narrative shorts.

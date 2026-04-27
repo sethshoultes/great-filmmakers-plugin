@@ -12,7 +12,7 @@ Two-round craft dispute resolution.
 - You have a craft choice and two filmmakers would clearly disagree. You want the real tension surfaced, not a split-the-difference answer.
 - Classic pairings: Kubrick vs. Scorsese (control vs. kinetic); Hitchcock vs. Spielberg (suspense vs. emotion); Deakins vs. Ferretti (light vs. set); Kaufman vs. Rhimes (structural invention vs. serial momentum); Lynch vs. Kubrick (dream vs. composition).
 
-Not for: general feedback (`/filmmakers-critique`); marked-up editorial pass (`/filmmakers-edit`); pipeline output (`/film-crew`).
+Not for: general feedback (`/filmmakers-critique`); marked-up editorial pass (`/filmmakers-edit`); pipeline output (`/filmmakers-crew`).
 
 ## Instructions for Claude
 

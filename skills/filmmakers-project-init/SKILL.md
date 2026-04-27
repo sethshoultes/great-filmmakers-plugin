@@ -1,9 +1,9 @@
 ---
-name: film-project-init
-description: Scaffold the film/ output directory at the project root (sibling to manuscript/) and add a ## Film section to .great-authors/project.md for tracking the current scene. Use when starting a writing project that will produce film artifacts via /filmmakers-channel save triggers or /film-crew in v1.0. Assumes .great-authors/ already exists (run /authors-project-init from great-authors-plugin first if not).
+name: filmmakers-project-init
+description: Scaffold the film/ output directory at the project root (sibling to manuscript/) and add a ## Film section to .great-authors/project.md for tracking the current scene. Use when starting a writing project that will produce film artifacts via /filmmakers-channel save triggers or /filmmakers-crew. Assumes .great-authors/ already exists (run /authors-project-init from great-authors-plugin first if not).
 ---
 
-# /film-project-init
+# /filmmakers-project-init
 
 Scaffold the `film/` directory and register it in the project bible.
 
@@ -36,7 +36,7 @@ Then adds a `## Film` section to `.great-authors/project.md`:
 **Path:** `film/` (at project root, sibling to `.great-authors/` and `manuscript/`)
 **Current scene:** `<user-chosen-slug>`
 
-Commands that generate film artifacts (`/filmmakers-channel` save triggers, `/film-crew` in v1.0) write to `film/<subdir>/<current-scene>.md` by default. Update `Current scene` when moving to the next scene.
+Commands that generate film artifacts (`/filmmakers-channel` save triggers, `/filmmakers-crew` in v1.0) write to `film/<subdir>/<current-scene>.md` by default. Update `Current scene` when moving to the next scene.
 ```
 
 ## When to use
@@ -75,7 +75,7 @@ When this skill is invoked:
    Current scene: <slug>
 
    Next:
-   - /film-crew <source-file> [--backend heygen|veo3|remotion] to generate a production doc.
+   - /filmmakers-crew <source-file> [--backend heygen|veo3|remotion] to generate a production doc.
    - Then run scripts/render_<backend>.py to turn the prompts into PNGs and MP4s.
      Source ~/.config/dev-secrets/secrets.env first so the API keys load.
    ```

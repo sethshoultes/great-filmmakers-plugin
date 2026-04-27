@@ -13,7 +13,7 @@ The multi-discipline editorial command. Fans out to 1-2 filmmaker personas; cons
 - You want both a director's take AND a specialist's take (e.g., Scorsese + Deakins, or Kubrick + Zimmer).
 - You're deciding between two directors for the same material — `/filmmakers-edit` runs both in parallel and shows you where they agree and diverge.
 
-Not for: fast 3-bullet gut checks (use `/filmmakers-critique`); 2-round debates between two voices (use `/filmmakers-debate`); full pipeline output (use `/film-crew`).
+Not for: fast 3-bullet gut checks (use `/filmmakers-critique`); 2-round debates between two voices (use `/filmmakers-debate`); full pipeline output (use `/filmmakers-crew`).
 
 ## Instructions for Claude
 

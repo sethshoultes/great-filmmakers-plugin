@@ -13,7 +13,7 @@ Load a named filmmaker persona into the current conversation.
 - You're doing creative exploration and want to think through a scene with Scorsese, Kubrick, Kaufman, etc. in the room.
 - You want to generate film-craft artifacts (screenplay, shot list, score notes, storyboards, edit notes) one at a time, iteratively.
 
-Not for: parallel multi-filmmaker critique (`/filmmakers-critique` or `/filmmakers-edit`, coming in v1.0); end-to-end film treatment generation (`/film-crew`, coming in v1.0).
+Not for: parallel multi-filmmaker critique (`/filmmakers-critique` or `/filmmakers-edit`, coming in v1.0); end-to-end film treatment generation (`/filmmakers-crew`, coming in v1.0).
 
 ## Instructions for Claude
 

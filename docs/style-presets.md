@@ -1,6 +1,6 @@
 # Great Filmmakers — Style Presets
 
-Style presets are short paragraphs prepended verbatim to every Veo 3 shot prompt produced by `/film-crew --backend veo3`. They lock the visual register across an entire short and create the consistency that lets match-cuts and character continuity actually work.
+Style presets are short paragraphs prepended verbatim to every Veo 3 shot prompt produced by `/filmmakers-crew --backend veo3`. They lock the visual register across an entire short and create the consistency that lets match-cuts and character continuity actually work.
 
 Without a style preset, Veo defaults to a generic photorealistic register that varies subtly between shots — and on the Gemini API tier, it also content-gates photorealistic humans. With a strong stylized preset, humans render fine and the look is consistent.
 

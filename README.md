@@ -17,6 +17,29 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
+## What's new in v1.9
+
+**Skill renames for plugin-internal consistency.** Two skills used the `film-*` prefix while five used `filmmakers-*` — `/film-crew` and `/film-project-init` were the outliers. With no existing users, renamed them now to fix the inconsistency before there are any:
+
+| Old | New |
+|---|---|
+| `/film-crew` | `/filmmakers-crew` |
+| `/film-project-init` | `/filmmakers-project-init` |
+
+All seven skills in the plugin now use the `filmmakers-*` prefix consistently:
+
+- `/filmmakers-channel`
+- `/filmmakers-crew`
+- `/filmmakers-project-init`
+- `/filmmakers-build-keyframes`
+- `/filmmakers-critique`
+- `/filmmakers-debate`
+- `/filmmakers-edit`
+
+Cross-plugin references updated in great-authors (orchestrate-novel Phase 7 closing), great-publishers (build-trailer SKILL, MANUAL, project-init SKILL, DXT server), and great-minds (constellation-start SKILL, phil-jackson-orchestrator persona). Brain notes updated.
+
+Surfaced by the cross-plugin consistency review — the explore-agent flagged it as a structural drift point. Fixed.
+
 ## What's new in v1.8
 
 Papercut fixes from real production use, plus a unified slug naming convention and a content-policy pre-flight scanner.
@@ -115,9 +138,9 @@ Three render-script templates that turn director-authored prompts into PNGs and 
 
 All three share the same shape: stdlib-only (or `requests` for Kling), env-key auth from canonical secrets, idempotent state file, `--only` and `--dry-run` flags, sensible API-drift warnings in the docstring. `render_kling.py` adds chain-conditioning (extracts the final frame of a prior MP4 as input to the next shot for held-take continuity). `render_veo.py` quantizes shot durations to {4, 6, 8} at parse time.
 
-### `/film-project-init` now copies them in
+### `/filmmakers-project-init` now copies them in
 
-When you run `/film-project-init`, the skill scaffolds `film/` AND copies `templates/scripts/*.py` into `<project>/scripts/`. Existing scripts are not overwritten. The render scripts are project-owned once copied — edit them freely.
+When you run `/filmmakers-project-init`, the skill scaffolds `film/` AND copies `templates/scripts/*.py` into `<project>/scripts/`. Existing scripts are not overwritten. The render scripts are project-owned once copied — edit them freely.
 
 ### Why scripts live at the project level
 
@@ -225,10 +248,10 @@ Reference images on Veo 3.1 actually work — v1.1's claim that they don't was w
 Production-grade fixes from the first real-world Veo 3 short ([Three Shapes of the Same Pattern](https://sethshoultes.com/blog/three-shapes.html)):
 
 - **Default Veo model corrected** — `veo-3.0-fast-generate-001` instead of `veo-3.1-fast-generate-preview`. The 3.1 previews reject all human subjects on the standard Gemini API tier; 3.0 Fast is the working option at $0.10/sec.
-- **Shot durations quantized to {4, 6, 8}** — Veo 3.0 Fast rejects 5- and 7-second shots despite docs claiming "between 4 and 8 inclusive." Schoonmaker's persona file now teaches this constraint as part of the cutting craft. `/film-crew --backend veo3` honors it.
+- **Shot durations quantized to {4, 6, 8}** — Veo 3.0 Fast rejects 5- and 7-second shots despite docs claiming "between 4 and 8 inclusive." Schoonmaker's persona file now teaches this constraint as part of the cutting craft. `/filmmakers-crew --backend veo3` honors it.
 - **`personGeneration` and `referenceImages` removed from API output** — both are rejected on the Gemini API tier. The `ingredient_images` block remains in the doc footer for the Veo Flow UI workflow but is now correctly documented as Flow-only.
 - **Style presets** — pen-and-ink editorial is the new default style anchor (verified to bypass the photorealistic-human content gate). See `docs/style-presets.md` for the library and how to add more.
-- **CLAUDE.md project template** — `/film-project-init` now drops a CLAUDE.md that establishes Claude as the orchestrator (dispatching personas via the Agent tool) rather than channeling them inline.
+- **CLAUDE.md project template** — `/filmmakers-project-init` now drops a CLAUDE.md that establishes Claude as the orchestrator (dispatching personas via the Agent tool) rather than channeling them inline.
 - **Schoonmaker craft note** — added a "leave silence for the visual punch" principle for shorts with VO; verified empirically by leaving the last ~10s of the trilogy short narration-free over the recognition push-in.
 
 Full constraint reference: `docs/output-formats.md` § "Veo 3 production constraints."
@@ -269,11 +292,11 @@ Full constraint reference: `docs/output-formats.md` § "Veo 3 production constra
 | Command | Purpose |
 |---------|---------|
 | `/filmmakers-channel <name>` | Load a filmmaker persona into the conversation with save triggers for five artifact types |
-| `/film-project-init` | Scaffold a `film/` directory and register it in the project bible |
+| `/filmmakers-project-init` | Scaffold a `film/` directory and register it in the project bible |
 | `/filmmakers-edit <file> [names...]` | Multi-filmmaker editorial pass with consolidated breakdowns |
 | `/filmmakers-critique <file> [names...]` | Fast 3-bullet verdicts from 3 filmmakers in parallel (Haiku-dispatched) |
 | `/filmmakers-debate <topic> <a> <b>` | 2-round craft dispute between two filmmakers |
-| `/film-crew <file> [--backend ...]` | Backend-aware pipeline — produces HeyGen, Veo 3, or Remotion-ready artifacts |
+| `/filmmakers-crew <file> [--backend ...]` | Backend-aware pipeline — produces HeyGen, Veo 3, or Remotion-ready artifacts |
 
 ## Project structure
 
@@ -296,7 +319,7 @@ All twelve filmmaker personas read the shared `.great-authors/` bible before giv
 
 ### Using with existing pipelines
 
-The v1.0 `/film-crew` command will produce three primary artifact formats, each matching an established video pipeline:
+The v1.0 `/filmmakers-crew` command will produce three primary artifact formats, each matching an established video pipeline:
 
 - **HeyGen script** (`.heygen.md`) — drop into `garagedoorscience/data/heygen-scripts/` for the existing HeyGen Video Agent pipeline (single-avatar educational video).
 - **Veo 3 production doc** (`.veo3.md`) — drop into `VEO_SCRIPTS_DIR` for the `veo-builder` dashboard at `~/Local Sites/veo-builder/` (multi-character cinematic via Google Video Flow UI).

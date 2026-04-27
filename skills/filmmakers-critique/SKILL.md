@@ -1,6 +1,6 @@
 ---
 name: filmmakers-critique
-description: Fast 3-bullet verdict on a source file from 3 filmmaker personas in parallel. Haiku-dispatched for speed and cost. Default triad covers director + writer + craft specialist (e.g., Scorsese + Rhimes + Deakins) — three dimensions of feedback in one shot. Use when you want triage before investing in a full /filmmakers-edit or /film-crew pass.
+description: Fast 3-bullet verdict on a source file from 3 filmmaker personas in parallel. Haiku-dispatched for speed and cost. Default triad covers director + writer + craft specialist (e.g., Scorsese + Rhimes + Deakins) — three dimensions of feedback in one shot. Use when you want triage before investing in a full /filmmakers-edit or /filmmakers-crew pass.
 ---
 
 # /filmmakers-critique <file> [filmmaker...]
@@ -13,7 +13,7 @@ Fast gut-check triage.
 - You're deciding which filmmakers to run `/filmmakers-edit` with — use critique to narrow down.
 - You want to see which of three disciplines (direction, writing, craft) has the strongest reaction.
 
-Not for: marked-up breakdowns (that's `/filmmakers-edit`); 2-round debates (that's `/filmmakers-debate`); full pipeline output (that's `/film-crew`).
+Not for: marked-up breakdowns (that's `/filmmakers-edit`); 2-round debates (that's `/filmmakers-debate`); full pipeline output (that's `/filmmakers-crew`).
 
 ## Instructions for Claude
 
