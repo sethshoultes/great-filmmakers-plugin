@@ -432,6 +432,12 @@ def main() -> int:
 
     config = json.loads(shots_path.read_text())
     shots = config["shots"]
+    if not shots:
+        sys.stderr.write(
+            f"ERROR: no shots found in {shots_path}. Check that the JSON sidecar's "
+            f"'shots' array is populated.\n"
+        )
+        return 1
     model_default = config.get("model_default", "kling-v2-master")
     aspect_ratio = config.get("aspect_ratio", "16:9")
 
@@ -445,6 +451,11 @@ def main() -> int:
     submitted_count = 0
     for shot in shots:
         if only and shot["id"] not in only:
+            continue
+        # Check completion BEFORE pacing sleep — otherwise re-runs sleep
+        # the full --pace interval per already-complete shot.
+        if state.get(shot["id"], {}).get("status") == "complete":
+            print(f"[{shot['id']}] already complete — skipping")
             continue
         if submitted_count > 0:
             time.sleep(args.pace)

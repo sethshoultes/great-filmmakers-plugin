@@ -357,7 +357,7 @@ Machine-readable footer includes `director`, `editor`, `pace`, `peak_shot_id`, `
 
 ### `<dir>/PROMPTS.md`
 
-Produced by `/filmmakers-build-keyframes`. Read by project-level render scripts (`scripts/render_keyframes.py`, `scripts/render_book_illustrations.py`) which copy in from `templates/scripts/`.
+Produced by `/filmmakers-build-keyframes`. Read by `scripts/render_keyframes.py` (which renders both video keyframes and book illustrations from the same PROMPTS.md format) and downstream by `scripts/wire_book_illustrations.py` (which places rendered PNGs into Astro chapter MDX). Both are project-level scripts, copied in from `templates/scripts/`.
 
 Used for: book illustrations (chapter inline placement, MDX), video keyframes (image-to-video conditioning), cover concept briefs.
 
@@ -420,7 +420,7 @@ The prefix names the role or location of the cue point; the scene-slug names the
 ### ([a-z][a-z0-9_\-]*)\.png
 ```
 
-This regex appears in `render_keyframes.py`, `render_book_illustrations.py`, and `wire_book_illustrations.py` (templated as of great-filmmakers v1.8). One pattern, one render script per backend, no per-project regex divergence.
+This regex appears in `render_keyframes.py` and `wire_book_illustrations.py` (templated as of great-filmmakers v1.8). One pattern, one render script per backend, no per-project regex divergence.
 
 **Why this matters:** earlier projects produced `### kf-<name>.png` for chapter-1 and `### ch<NN>-<name>.png` for chapters 2-N, and the divergence required two different render scripts and two different regexes. The single naming convention lets one regex handle both chapter keyframes (image-to-video) and book illustrations (chapter inline). The render script doesn't need to know whether a slug is `kf-*` or `ch01-*` — it just iterates matched blocks.
 
@@ -518,7 +518,7 @@ Avoid for editorial-register work; acceptable for tasks where the user will manu
 
 ### Render script contract
 
-Project-level render scripts (`scripts/render_keyframes.py`, `scripts/render_book_illustrations.py`) read PROMPTS.md, prepend the style anchor and visual-lints negative prompt to each block, submit per the backend's API shape, and download with the appropriate User-Agent (browser-style for Leonardo). The scripts handle:
+Project-level render scripts (`scripts/render_keyframes.py` for image generation, plus `scripts/wire_book_illustrations.py` for placing rendered PNGs into chapter MDX) read PROMPTS.md, prepend the style anchor and visual-lints negative prompt to each block, submit per the backend's API shape, and download with the appropriate User-Agent (browser-style for Leonardo). The scripts handle:
 
 - Idempotency (skip-if-exists; `--force` regenerates; `--only <slug>` filters)
 - Pacing between submissions

@@ -20,9 +20,10 @@ film/
 └── edit-notes/   # Director notes + editor cut notes
 
 scripts/
-├── render_keyframes.py   # gpt-image-1 → PNG keyframes from a director PROMPTS.md
-├── render_kling.py       # Kling 2.5 image-to-video → MP4 (with chain conditioning)
-└── render_veo.py         # Veo 3.0 Fast text-to-video → MP4 (durations quantized)
+├── render_keyframes.py        # gpt-image-1 → PNG keyframes / book illustrations from a director PROMPTS.md
+├── render_kling.py            # Kling 2.5 image-to-video → MP4 (with chain conditioning)
+├── render_veo.py              # Veo 3.0 Fast text-to-video → MP4 (durations quantized)
+└── wire_book_illustrations.py # Wires rendered PNGs into Astro chapter MDX (fuzzy anchor matching)
 ```
 
 The render scripts are project-owned once copied — edit them freely. Re-running this skill will not overwrite an existing `scripts/` directory.
@@ -67,7 +68,7 @@ When this skill is invoked:
      screenplay/  shot-lists/  score-notes/  storyboards/  edit-notes/
 
    Copied render scripts into scripts/:
-     render_keyframes.py  render_kling.py  render_veo.py
+     render_keyframes.py  render_kling.py  render_veo.py  wire_book_illustrations.py
    (skipped <list> — already present)
 
    Updated .great-authors/project.md with ## Film section.

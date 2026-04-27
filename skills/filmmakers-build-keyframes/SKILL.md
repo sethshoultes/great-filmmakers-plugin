@@ -14,7 +14,7 @@ Generate a structured `PROMPTS.md` for image-generation backends from a prose so
 - A book cover or marketing visual needs a brief grounded in the actual work.
 - Any time the same brief that's been hand-written before is about to be hand-written again.
 
-This skill is intentionally upstream of every render pass. The output is a creative artifact (PROMPTS.md); the actual rendering happens via project-level scripts (`render_keyframes.py`, `render_book_illustrations.py`) that copy in from `templates/scripts/`.
+This skill is intentionally upstream of every render pass. The output is a creative artifact (PROMPTS.md); the actual rendering happens via the project-level `scripts/render_keyframes.py` (which handles both video keyframes and book illustrations from the same PROMPTS.md format) — copied in from `templates/scripts/`.
 
 ## What this does
 

@@ -17,7 +17,7 @@ Reads OPENAI_API_KEY from the environment. Source from canonical secrets:
 Idempotency
 -----------
 Skips keyframes whose PNG already exists. --force regenerates all.
---only <name> renders a single keyframe.
+--only <name>[,<name>...] renders a single keyframe or comma-separated list.
 
 Output size
 -----------
@@ -126,7 +126,7 @@ def main() -> int:
         "--out-dir",
         help="Directory to write PNGs into (default: dirname of --prompts-file)",
     )
-    parser.add_argument("--only", help="Render only this keyframe slug")
+    parser.add_argument("--only", help="Comma-separated keyframe slugs (e.g., kf-foo,kf-bar). Defaults to all blocks.")
     parser.add_argument("--force", action="store_true", help="Regenerate even if PNG exists")
     parser.add_argument("--size", default=DEFAULT_SIZE, help=f"Image size (default: {DEFAULT_SIZE})")
     parser.add_argument("--quality", default=DEFAULT_QUALITY, help=f"Image quality (default: {DEFAULT_QUALITY})")
@@ -154,7 +154,7 @@ def main() -> int:
         )
         return 1
 
-    targets = [args.only] if args.only else sorted(blocks)
+    targets = [s.strip() for s in args.only.split(",")] if args.only else sorted(blocks)
 
     rendered = 0
     skipped = 0

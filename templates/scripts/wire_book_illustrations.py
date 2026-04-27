@@ -420,8 +420,22 @@ def main() -> int:
     rendered_dir = Path(args.rendered_dir).resolve()
     keyframes_dir = Path(args.keyframes_dir).resolve()
     book_root = Path(args.book_root).resolve()
+    if not book_root.exists():
+        sys.stderr.write(
+            f"error: --book-root {book_root} does not exist. "
+            f"Create the Astro book site first, then re-run.\n"
+        )
+        return 1
     public_illustrations = book_root / DEFAULT_BOOK_PUBLIC
     chapters_dir = book_root / DEFAULT_BOOK_CHAPTERS
+    if not chapters_dir.exists():
+        sys.stderr.write(
+            f"error: chapters directory not found at {chapters_dir}. "
+            f"Expected the Astro book-site convention "
+            f"<book-root>/src/content/chapters/. Override paths if your "
+            f"site uses a different layout.\n"
+        )
+        return 1
 
     chapter_slugs_json = Path(args.chapter_slugs).resolve() if args.chapter_slugs else None
     chapter_slugs = load_chapter_slugs(chapter_slugs_json, chapters_dir)

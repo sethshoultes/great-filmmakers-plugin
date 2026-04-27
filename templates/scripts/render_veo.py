@@ -377,13 +377,19 @@ def render_shot(
     uri = extract_video_uri(op)
     out_path = out_dir / f"{shot_id}.mp4"
     download_video(uri, out_path, api_key=api_key)
-    print(f"[{shot_id}] saved {out_path.relative_to(project_root)}")
+    # When --out-dir points outside the project, relative_to() raises;
+    # fall back to the absolute path so we don't crash post-download.
+    try:
+        display_path = out_path.relative_to(project_root)
+    except ValueError:
+        display_path = out_path
+    print(f"[{shot_id}] saved {display_path}")
     return {
         "status": "complete",
         "operation": op_name,
         "duration": duration,
         "rendered_at": datetime.utcnow().isoformat() + "Z",
-        "output": str(out_path.relative_to(project_root)),
+        "output": str(display_path),
     }
 
 
@@ -429,6 +435,12 @@ def main() -> int:
     print(f"Output dir:   {out_dir}")
     print(f"Style anchor: {len(style_anchor)} chars")
     print(f"Shots parsed: {len(shots)}")
+    if not shots:
+        sys.stderr.write(
+            f"ERROR: no shots parsed from {doc_path}. Expected '### Shot <ID> — <N> seconds' "
+            f"headings (note: em dash —, not hyphen -). Check the production doc format.\n"
+        )
+        return 1
     for s in shots:
         flag = "" if s["duration"] == s["declared_duration"] else f" (was {s['declared_duration']}s)"
         print(f"  {s['id']:4}  {s['duration']}s{flag}  prompt={len(s['prompt'])} chars")
