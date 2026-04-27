@@ -17,6 +17,33 @@ Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus s
 /plugin install great-filmmakers@sethshoultes
 ```
 
+## What's new in v1.10
+
+DXT bundle parity with the rest of the constellation, plus polish from the quality review.
+
+### `distribution/dxt/` — new
+
+Full DXT bundle for Claude Desktop. `manifest.json`, `package.json`, `server/index.js` with handlers for all 7 skills, `server/personas/` with copies of all 12 persona files. Build with:
+
+```bash
+cd distribution/dxt && npm install && npx @anthropic-ai/dxt pack
+```
+
+great-filmmakers was the only plugin in the constellation without a DXT bundle. Now it has one.
+
+### `CHANGELOG.md` — new
+
+Keep-a-Changelog index of every release back to v1.0. The README's "What's new in vX.Y" sections are still the authoritative narrative; CHANGELOG.md is the per-release index for tooling and quick reference.
+
+### Smoke test extensions
+
+- DXT bundle alignment checks added (persona-count parity between `agents/` and `distribution/dxt/server/personas/`, tool/handler matching, version coherence including DXT manifests).
+- Lexicographic semver compare replaced with numeric major.minor compare (would have silently broken at v1.10 — exactly this release).
+
+### Template polish
+
+- `datetime.utcnow()` → `datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")` in `render_kling.py` and `render_veo.py`. Future-proof against Python 3.12+ deprecation.
+
 ## What's new in v1.9
 
 **Skill renames for plugin-internal consistency.** Two skills used the `film-*` prefix while five used `filmmakers-*` — `/film-crew` and `/film-project-init` were the outliers. With no existing users, renamed them now to fix the inconsistency before there are any:

@@ -55,9 +55,62 @@ echo "Checking version coherence..."
 PKG_VERSION=$(grep '"version"' package.json | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/')
 PLUGIN_VERSION=$(grep '"version"' .claude-plugin/plugin.json | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/')
 
+# DXT bundle versions (added in v1.10).
+DXT_PKG_VERSION=""
+DXT_MANIFEST_VERSION=""
+if [ -f "distribution/dxt/package.json" ]; then
+  DXT_PKG_VERSION=$(grep '"version"' distribution/dxt/package.json | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+fi
+if [ -f "distribution/dxt/manifest.json" ]; then
+  DXT_MANIFEST_VERSION=$(grep '"version"' distribution/dxt/manifest.json | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+fi
+
 if [ "$PKG_VERSION" != "$PLUGIN_VERSION" ]; then
   red "  FAIL: version drift between package.json ($PKG_VERSION) and .claude-plugin/plugin.json ($PLUGIN_VERSION)"
   ERRORS=$((ERRORS + 1))
+fi
+if [ -n "$DXT_PKG_VERSION" ] && [ "$PKG_VERSION" != "$DXT_PKG_VERSION" ]; then
+  red "  FAIL: version drift between package.json ($PKG_VERSION) and distribution/dxt/package.json ($DXT_PKG_VERSION)"
+  ERRORS=$((ERRORS + 1))
+fi
+if [ -n "$DXT_MANIFEST_VERSION" ] && [ "$PKG_VERSION" != "$DXT_MANIFEST_VERSION" ]; then
+  red "  FAIL: version drift between package.json ($PKG_VERSION) and distribution/dxt/manifest.json ($DXT_MANIFEST_VERSION)"
+  ERRORS=$((ERRORS + 1))
+fi
+
+# ---------- 2b. DXT bundle persona alignment (v1.10+) ----------
+
+if [ -d "distribution/dxt/server/personas" ]; then
+  echo "Checking DXT bundled personas match agents/..."
+  AGENTS_COUNT=$(ls agents/*-persona.md 2>/dev/null | wc -l | tr -d ' ')
+  DXT_COUNT=$(ls distribution/dxt/server/personas/*.md 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$AGENTS_COUNT" != "$DXT_COUNT" ]; then
+    red "  FAIL: agents/ has $AGENTS_COUNT *-persona.md files but distribution/dxt/server/personas/ has $DXT_COUNT"
+    red "        Run: cp agents/*.md distribution/dxt/server/personas/"
+    ERRORS=$((ERRORS + 1))
+  fi
+fi
+
+# ---------- 2c. DXT tool / handler alignment (v1.10+) ----------
+
+if [ -f "distribution/dxt/server/index.js" ]; then
+  echo "Checking DXT tool definitions vs handlers..."
+  TOOL_NAMES=$(grep -oE 'name: "[a-z_]+"' distribution/dxt/server/index.js | sed 's/name: "\(.*\)"/\1/' | sort -u)
+  HANDLER_NAMES=$(grep -oE 'name === "[a-z_]+"' distribution/dxt/server/index.js | sed 's/name === "\(.*\)"/\1/' | sort -u)
+
+  MISSING_HANDLERS=$(comm -23 <(echo "$TOOL_NAMES") <(echo "$HANDLER_NAMES"))
+  MISSING_DEFS=$(comm -13 <(echo "$TOOL_NAMES") <(echo "$HANDLER_NAMES"))
+
+  if [ -n "$MISSING_HANDLERS" ]; then
+    red "  FAIL: tool defined in DXT manifest but no handler:"
+    echo "$MISSING_HANDLERS" | sed 's/^/        /' >&2
+    ERRORS=$((ERRORS + 1))
+  fi
+  if [ -n "$MISSING_DEFS" ]; then
+    red "  FAIL: handler in DXT but no tool definition:"
+    echo "$MISSING_DEFS" | sed 's/^/        /' >&2
+    ERRORS=$((ERRORS + 1))
+  fi
 fi
 
 # ---------- 3. Style preset slug consistency (trilogy improvement #5) ----------
@@ -91,7 +144,10 @@ fi
 # ---------- 4. v1.7+ filmmakers-build-keyframes skill check ----------
 
 echo "Checking v1.7+ filmmakers-build-keyframes skill exists..."
-if [ "$PLUGIN_VERSION" \> "1.6" ] || [ "$PLUGIN_VERSION" = "1.7.0" ] || [ "$PLUGIN_VERSION" \> "1.7.0" ]; then
+# Numeric major.minor compare (lexicographic compare would break at v1.10).
+PLUGIN_MAJOR=$(echo "$PLUGIN_VERSION" | cut -d. -f1)
+PLUGIN_MINOR=$(echo "$PLUGIN_VERSION" | cut -d. -f2)
+if [ "$PLUGIN_MAJOR" -gt 1 ] || { [ "$PLUGIN_MAJOR" -eq 1 ] && [ "$PLUGIN_MINOR" -ge 7 ]; }; then
   if [ ! -f "skills/filmmakers-build-keyframes/SKILL.md" ]; then
     red "  FAIL: v1.7+ requires skills/filmmakers-build-keyframes/SKILL.md (trilogy improvement #1)"
     ERRORS=$((ERRORS + 1))

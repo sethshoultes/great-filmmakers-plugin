@@ -1,0 +1,54 @@
+{
+  "dxt_version": "0.1",
+  "name": "great-filmmakers",
+  "display_name": "Great Filmmakers",
+  "version": "1.10.0",
+  "description": "Twelve filmmaker personas (6 directors + 2 writers + 4 craft specialists) plus seven slash commands for scene breakdown, shot design, keyframe generation, and full backend-aware production-doc pipelines (HeyGen / Veo 3 / Remotion).",
+  "long_description": "Channel film craft from twelve canonical figures: six directors (Scorsese, Kubrick, Kurosawa, Hitchcock, Spielberg, Lynch), two writers (Kaufman, Rhimes), and four craft specialists (Deakins on cinematography, Schoonmaker on editing, Ferretti on production design, Zimmer on score). Run /filmmakers-crew to turn a source file (blog post, manuscript chapter, scene notes) into a full backend-ready production doc — single-avatar HeyGen scripts, multi-character Veo 3 production docs with CAST/VISUAL GRAMMAR/SHOT LIST, or Remotion slideshow scripts. Run /filmmakers-build-keyframes to dispatch a director persona to identify illustration cue points and produce structured PROMPTS.md for image generation. Companion to great-authors, great-publishers, great-marketers, great-minds — fifth piece of the Caseproof persona constellation.",
+  "author": {
+    "name": "Seth Shoultes",
+    "email": "seth@caseproof.com"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "list_filmmakers",
+      "description": "List the twelve filmmaker personas with one-line descriptions of each."
+    },
+    {
+      "name": "filmmakers_channel",
+      "description": "Return a prompt that loads a named filmmaker persona into the conversation for direct collaboration on scene breakdown, shot design, or craft conversation. Substantive output saves to film/<artifact-type>/<slug>.md by save trigger. Valid personas: scorsese, kubrick, kurosawa, hitchcock, spielberg, lynch, kaufman, rhimes, deakins, schoonmaker, ferretti, zimmer (short forms accepted: marty, stanley, hitch, shonda)."
+    },
+    {
+      "name": "filmmakers_crew",
+      "description": "Return a prompt that turns a source file (blog post, manuscript chapter, scene notes) into a complete film treatment across the appropriate specialists for a chosen video backend. Backends: heygen (single-avatar talking-head), veo3 (multi-character cinematic with CAST + VISUAL GRAMMAR + SHOT LIST), remotion (slideshow + narration). Auto-selects backend from source classification if omitted."
+    },
+    {
+      "name": "filmmakers_project_init",
+      "description": "Return a prompt that scaffolds the film/ output directory at the project root (sibling to manuscript/) plus the scripts/ render-script templates (render_keyframes.py, render_kling.py, render_veo.py, wire_book_illustrations.py). Adds a ## Film section to .great-authors/project.md for tracking the current scene."
+    },
+    {
+      "name": "filmmakers_build_keyframes",
+      "description": "Return a prompt that dispatches a director persona to read source prose + the project bible, identify illustration cue points, and produce a structured PROMPTS.md artifact (TOC + per-prompt blocks with style anchor, composition, subject, light, production design, negative prompt). Default director Hitchcock for genre fiction; --director overrides accept Deakins (natural-light), Kurosawa (landscape), Scorsese, Kubrick, Lynch, Spielberg."
+    },
+    {
+      "name": "filmmakers_critique",
+      "description": "Return a prompt for fast 3-bullet critique of a scene or shot list from N filmmaker personas. Each persona gives ONE crisp craft observation. Use for quick sanity checks before committing to a production doc."
+    },
+    {
+      "name": "filmmakers_debate",
+      "description": "Return a prompt for a 2-round craft debate between two filmmaker personas on a specific shot, scene, or production decision. Round 1: each states their position. Round 2: each responds. Consolidation names the real tension and picks a winner or offers a third option."
+    },
+    {
+      "name": "filmmakers_edit",
+      "description": "Return a prompt that runs 1-2 filmmaker personas as editors on a draft scene, shot list, or production doc. Produces a consolidated marked-up view."
+    }
+  ]
+}

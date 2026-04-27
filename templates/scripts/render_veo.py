@@ -71,7 +71,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -388,7 +388,7 @@ def render_shot(
         "status": "complete",
         "operation": op_name,
         "duration": duration,
-        "rendered_at": datetime.utcnow().isoformat() + "Z",
+        "rendered_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "output": str(display_path),
     }
 
@@ -504,7 +504,7 @@ def main() -> int:
             state[shot["id"]] = {
                 "status": "error",
                 "error": str(e),
-                "at": datetime.utcnow().isoformat() + "Z",
+                "at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             }
             save_state(state_path, state)
 

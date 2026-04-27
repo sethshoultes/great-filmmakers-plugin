@@ -79,7 +79,7 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -398,7 +398,7 @@ def render_shot(
         "duration": duration,
         "mode": mode,
         "model": model,
-        "rendered_at": datetime.utcnow().isoformat() + "Z",
+        "rendered_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "output": str(out_path.relative_to(project_root)),
     }
 
@@ -477,7 +477,7 @@ def main() -> int:
             state[shot["id"]] = {
                 "status": "error",
                 "error": str(e),
-                "at": datetime.utcnow().isoformat() + "Z",
+                "at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             }
             save_state(state_path, state)
 
